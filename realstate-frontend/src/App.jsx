@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Properties from './pages/Properties';
 import PropertyForm from './pages/PropertyForm';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AgentDashboard from './pages/agent/AgentDashboard';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -40,6 +42,19 @@ function App() {
             } />
             
             {/* Protected Routes - Only logged in users can access */}
+             <Route path="/admin/dashboard" element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/agent/dashboard" element={
+              <ProtectedRoute>
+                <AgentDashboard />
+              </ProtectedRoute>
+            } />
+
+
             <Route path="/properties" element={
               <ProtectedRoute>
                 <Properties />

@@ -60,7 +60,7 @@ const Navbar = () => {
               {user.role === "agent" && (
                 <>
                   <Link to="/profiledashboard" style={{ padding: '0.5rem 1rem', textDecoration: 'none', color: 'black' }}>Agent Profile</Link>
-                  <Link to="/dashboard" style={{ padding: '0.5rem 1rem', textDecoration: 'none', color: 'black' }}>Dashboard</Link>
+                  <Link to="/agent/dashboard" style={{ padding: '0.5rem 1rem', textDecoration: 'none', color: 'black' }}>Dashboard</Link>
                   <Link to="/applications" style={{ padding: '0.5rem 1rem', textDecoration: 'none', color: 'black' }}>User Applications</Link>
                 </>
               )}
