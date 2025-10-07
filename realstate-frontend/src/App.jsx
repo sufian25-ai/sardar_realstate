@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Properties from './pages/Properties';
 import PropertyForm from './pages/PropertyForm';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminNavbar from './pages/admin/AdminDashboard';
 import AgentDashboard from './pages/agent/AgentDashboard';
 import UserProfile from './pages/user/UserProfile';
 import './App.css';
@@ -45,7 +45,7 @@ function App() {
             {/* Protected Routes - Only logged in users can access */}
              <Route path="/admin/dashboard" element={
               <ProtectedRoute>
-                <AdminDashboard />
+                <AdminNavbar />
               </ProtectedRoute>
             } />
 
