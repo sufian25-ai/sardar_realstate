@@ -127,25 +127,17 @@ const HomePage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-vh-100 d-flex justify-content-center align-items-center bg-primary">
+      <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-blue-900 to-purple-900">
         <div className="text-center">
-          <img 
-            src="/assets/logo1.png" 
-            alt="Loading..." 
-            className="spin"
-            style={{ width: '200px', height: 'auto' }}
-          />
-          <style>
-            {`
-              .spin {
-                animation: spin 2s linear infinite;
-              }
-              @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-              }
-            `}
-          </style>
+          <div className="relative">
+            <img 
+              src="/assets/logo1.png" 
+              alt="Loading..." 
+              className="w-48 h-48 animate-spin-slow"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-pulse rounded-full"></div>
+          </div>
+          <p className="mt-6 text-white text-xl font-light animate-pulse">Loading Your Dream Properties...</p>
         </div>
       </div>
     );
@@ -153,32 +145,35 @@ const HomePage = () => {
 
   return (
     <>
-      {/* Bootstrap Icons */}
-      <link 
-        rel="stylesheet" 
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" 
-      />
-      
       <Navbar />
 
       {/* Hero Section */}
-      <section className="hero-section position-relative" style={{ height: '100vh', marginTop: '76px' }}>
+      <section className="relative h-screen mt-20 overflow-hidden">
         {heroSlides.map((slide, index) => (
           <div
             key={index}
-            className={`position-absolute w-100 h-100 transition-all ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+              index === currentSlide ? 'opacity-100' : 'opacity-0'
+            }`}
             style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${slide.image})`,
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${slide.image})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              transition: 'opacity 1s ease-in-out'
+              backgroundAttachment: 'fixed'
             }}
           >
-            <div className="container h-100 d-flex align-items-center">
-              <div className="text-center text-white w-100">
-                <h1 className="display-3 fw-bold mb-4 text-shadow">{slide.title}</h1>
-                <p className="fs-5 mb-5 opacity-90 text-shadow">{slide.subtitle}</p>
-                <Link to="/properties" className="btn btn-primary btn-lg px-5 py-3 fw-semibold">
+            <div className="container mx-auto h-full flex items-center px-6">
+              <div className="text-center text-white w-full max-w-4xl mx-auto">
+                <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-fade-in-up">
+                  {slide.title}
+                </h1>
+                <p className="text-xl md:text-2xl mb-8 opacity-95 font-light leading-relaxed animate-fade-in-up animate-delay-200">
+                  {slide.subtitle}
+                </p>
+                <Link 
+                  to="/properties" 
+                  className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-4 rounded-full shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300 animate-fade-in-up animate-delay-400"
+                >
                   {slide.buttonText}
                 </Link>
               </div>
@@ -188,81 +183,106 @@ const HomePage = () => {
 
         {/* Slider Controls */}
         <button 
-          className="position-absolute top-50 start-0 translate-middle-y btn btn-light btn-lg rounded-circle opacity-75 mx-3"
+          className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-4 rounded-full transition-all duration-300 hover:scale-110 group"
           onClick={prevSlide}
         >
-          <i className="bi bi-chevron-left"></i>
+          <svg className="w-6 h-6 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
         <button 
-          className="position-absolute top-50 end-0 translate-middle-y btn btn-light btn-lg rounded-circle opacity-75 mx-3"
+          className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-4 rounded-full transition-all duration-300 hover:scale-110 group"
           onClick={nextSlide}
         >
-          <i className="bi bi-chevron-right"></i>
+          <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
 
         {/* Slider Indicators */}
-        <div className="position-absolute bottom-0 start-50 translate-middle-x mb-4">
-          <div className="d-flex gap-2">
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+          <div className="flex space-x-3">
             {heroSlides.map((_, index) => (
               <button
                 key={index}
-                className={`btn btn-sm rounded-circle ${index === currentSlide ? 'btn-light' : 'btn-outline-light'}`}
-                style={{ width: '12px', height: '12px' }}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index === currentSlide 
+                    ? 'bg-white scale-125' 
+                    : 'bg-white/50 hover:bg-white/80'
+                }`}
                 onClick={() => setCurrentSlide(index)}
               />
             ))}
           </div>
         </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
+          </div>
+        </div>
       </section>
 
       {/* Search Section */}
-      <section className="py-5 bg-light">
-        <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-12">
-              <div className="card shadow-lg border-0 rounded-3">
-                <div className="card-body p-5">
-                  <h2 className="text-center display-5 fw-bold text-dark mb-4">
-                    Find Your Perfect Property
-                  </h2>
-                  <div className="row g-4">
-                    <div className="col-md-3">
-                      <label className="form-label fw-semibold">Property Type</label>
-                      <select className="form-select form-select-lg">
-                        <option>Any Type</option>
-                        <option>Apartment</option>
-                        <option>Villa</option>
-                        <option>Commercial</option>
-                        <option>Land</option>
-                      </select>
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label fw-semibold">Location</label>
-                      <select className="form-select form-select-lg">
-                        <option>Any Location</option>
-                        <option>Gulshan</option>
-                        <option>Banani</option>
-                        <option>Dhanmondi</option>
-                        <option>Uttara</option>
-                      </select>
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label fw-semibold">Price Range</label>
-                      <select className="form-select form-select-lg">
-                        <option>Any Price</option>
-                        <option>$100,000 - $200,000</option>
-                        <option>$200,000 - $400,000</option>
-                        <option>$400,000 - $800,000</option>
-                        <option>$800,000+</option>
-                      </select>
-                    </div>
-                    <div className="col-md-3 d-flex align-items-end">
-                      <button className="btn btn-primary btn-lg w-100 py-3">
-                        <i className="bi bi-search me-2"></i>
-                        Search
-                      </button>
-                    </div>
-                  </div>
+      <section className="py-16 bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
+        {/* Background Decorations */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-blue-200 rounded-full -translate-x-36 -translate-y-36 opacity-50"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-200 rounded-full translate-x-48 translate-y-48 opacity-50"></div>
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-8 md:p-12">
+              <div className="text-center mb-8">
+                <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                  Find Your Perfect Property
+                </h2>
+                <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                  Discover properties that match your dreams and budget with our advanced search
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Property Type</label>
+                  <select className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 bg-white/50 backdrop-blur-sm">
+                    <option>Any Type</option>
+                    <option>Apartment</option>
+                    <option>Villa</option>
+                    <option>Commercial</option>
+                    <option>Land</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Location</label>
+                  <select className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 bg-white/50 backdrop-blur-sm">
+                    <option>Any Location</option>
+                    <option>Gulshan</option>
+                    <option>Banani</option>
+                    <option>Dhanmondi</option>
+                    <option>Uttara</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Price Range</label>
+                  <select className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 bg-white/50 backdrop-blur-sm">
+                    <option>Any Price</option>
+                    <option>$100,000 - $200,000</option>
+                    <option>$200,000 - $400,000</option>
+                    <option>$400,000 - $800,000</option>
+                    <option>$800,000+</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-end">
+                  <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center space-x-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span>Search</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -271,50 +291,63 @@ const HomePage = () => {
       </section>
 
       {/* Featured Properties */}
-      <section className="py-5">
-        <div className="container">
-          <div className="text-center mb-5">
-            <h2 className="display-4 fw-bold text-dark mb-3">Featured Properties</h2>
-            <p className="lead text-muted">
-              Discover our handpicked selection of premium properties in prime locations
+      <section className="py-20 bg-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-blue-100 to-transparent rounded-full -translate-y-32 translate-x-32"></div>
+        
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-5xl font-bold bg-gradient-to-r from-gray-800 to-blue-800 bg-clip-text text-transparent mb-6">
+              Featured Properties
+            </h2>
+            <p className="text-gray-600 text-xl leading-relaxed">
+              Discover our handpicked selection of premium properties in prime locations across the city
             </p>
           </div>
 
-          <div className="row g-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {featuredProperties.map(property => (
-              <div key={property.id} className="col-lg-3 col-md-6">
-                <div className="card property-card h-100 border-0 shadow-sm hover-shadow">
-                  <div className="position-relative overflow-hidden">
-                    <img 
-                      src={property.image} 
-                      className="card-img-top property-image" 
-                      alt={property.title}
-                      style={{ height: '250px', objectFit: 'cover' }}
-                    />
-                    <div className="position-absolute top-0 end-0 m-3">
-                      <span className="badge bg-primary">{property.type}</span>
-                    </div>
+              <div key={property.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-blue-200">
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={property.image} 
+                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700" 
+                    alt={property.title}
+                  />
+                  <div className="absolute top-4 right-4">
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                      {property.type}
+                    </span>
                   </div>
-                  <div className="card-body">
-                    <h5 className="card-title fw-bold text-dark">{property.title}</h5>
-                    <h4 className="text-primary fw-bold mb-2">{property.price}</h4>
-                    <p className="text-muted mb-3">
-                      <i className="bi bi-geo-alt me-2"></i>
-                      {property.location}
-                    </p>
-                    <div className="row text-center border-top pt-3">
-                      <div className="col-4">
-                        <div className="fw-bold text-dark">{property.beds}</div>
-                        <small className="text-muted">Beds</small>
-                      </div>
-                      <div className="col-4">
-                        <div className="fw-bold text-dark">{property.baths}</div>
-                        <small className="text-muted">Baths</small>
-                      </div>
-                      <div className="col-4">
-                        <div className="fw-bold text-dark">{property.sqft}</div>
-                        <small className="text-muted">Sq Ft</small>
-                      </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-300">
+                    {property.title}
+                  </h3>
+                  <h4 className="text-2xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-3">
+                    {property.price}
+                  </h4>
+                  <p className="text-gray-600 mb-4 flex items-center">
+                    <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {property.location}
+                  </p>
+                  
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <div className="text-center">
+                      <div className="font-bold text-gray-800">{property.beds}</div>
+                      <div className="text-sm text-gray-500">Beds</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-gray-800">{property.baths}</div>
+                      <div className="text-sm text-gray-500">Baths</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-gray-800">{property.sqft}</div>
+                      <div className="text-sm text-gray-500">Sq Ft</div>
                     </div>
                   </div>
                 </div>
@@ -322,34 +355,51 @@ const HomePage = () => {
             ))}
           </div>
 
-          <div className="text-center mt-5">
-            <Link to="/properties" className="btn btn-outline-primary btn-lg px-5">
-              View All Properties
+          <div className="text-center mt-12">
+            <Link 
+              to="/properties" 
+              className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+            >
+              <span>View All Properties</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
             </Link>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section className="py-5 bg-light">
-        <div className="container">
-          <div className="text-center mb-5">
-            <h2 className="display-4 fw-bold text-dark mb-3">Our Services</h2>
-            <p className="lead text-muted">
-              Comprehensive real estate solutions tailored to your needs
+      <section className="py-20 bg-gradient-to-br from-gray-900 to-blue-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-400/10 rounded-full -translate-x-48 -translate-y-48"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/10 rounded-full translate-x-48 translate-y-48"></div>
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-5xl font-bold text-white mb-6">
+              Our Services
+            </h2>
+            <p className="text-blue-100 text-xl leading-relaxed">
+              Comprehensive real estate solutions tailored to your unique needs and aspirations
             </p>
           </div>
 
-          <div className="row g-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {services.map((service, index) => (
-              <div key={index} className="col-lg-3 col-md-6">
-                <div className="card service-card h-100 border-0 text-center shadow-sm hover-lift">
-                  <div className="card-body p-4">
-                    <div className="display-4 mb-3">{service.icon}</div>
-                    <h4 className="fw-bold text-dark mb-3">{service.title}</h4>
-                    <p className="text-muted">{service.description}</p>
-                  </div>
+              <div 
+                key={index} 
+                className="group bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:border-white/40 transition-all duration-500 hover:transform hover:-translate-y-2 hover:shadow-2xl"
+              >
+                <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
+                  {service.icon}
                 </div>
+                <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-blue-200 transition-colors duration-300">
+                  {service.title}
+                </h3>
+                <p className="text-blue-100 leading-relaxed opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+                  {service.description}
+                </p>
               </div>
             ))}
           </div>
@@ -357,50 +407,98 @@ const HomePage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-dark text-white py-5">
-        <div className="container">
-          <div className="row g-4">
-            <div className="col-lg-4">
+      <footer className="bg-gradient-to-br from-gray-900 to-black text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent"></div>
+        
+        <div className="container mx-auto px-6 py-12 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="space-y-6">
               <img 
                 src="/assets/logo.png" 
                 alt="Sardar Estate" 
-                className="mb-3"
-                style={{ width: '150px', height: 'auto' }}
+                className="w-40 h-auto filter brightness-0 invert"
               />
-              <p className="text-light">
-                Your trusted partner in real estate. We provide premium property solutions with integrity and excellence.
+              <p className="text-gray-300 leading-relaxed max-w-md">
+                Your trusted partner in real estate. We provide premium property solutions with integrity, excellence, and personalized service.
               </p>
+              <div className="flex space-x-4">
+                {['facebook', 'twitter', 'instagram', 'linkedin'].map((social) => (
+                  <a 
+                    key={social}
+                    href="#" 
+                    className="w-10 h-10 bg-white/10 hover:bg-blue-600 rounded-full flex items-center justify-center transition-all duration-300 hover:transform hover:-translate-y-1"
+                  >
+                    <span className="sr-only">{social}</span>
+                    {/* Add social icons here */}
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="col-lg-2">
-              <h5 className="fw-bold mb-3">Quick Links</h5>
-              <ul className="list-unstyled">
-                <li className="mb-2"><a href="/properties" className="text-light text-decoration-none">Properties</a></li>
-                <li className="mb-2"><a href="/services" className="text-light text-decoration-none">Services</a></li>
-                <li className="mb-2"><a href="/about" className="text-light text-decoration-none">About Us</a></li>
-                <li className="mb-2"><a href="/contact" className="text-light text-decoration-none">Contact</a></li>
+            
+            <div className="space-y-4">
+              <h5 className="text-lg font-bold text-white mb-4">Quick Links</h5>
+              <ul className="space-y-3">
+                {['Properties', 'Services', 'About Us', 'Contact'].map((link) => (
+                  <li key={link}>
+                    <a 
+                      href={`/${link.toLowerCase().replace(' ', '-')}`} 
+                      className="text-gray-300 hover:text-white transition-colors duration-300 flex items-center group"
+                    >
+                      <svg className="w-4 h-4 mr-3 text-blue-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      {link}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
-            <div className="col-lg-3">
-              <h5 className="fw-bold mb-3">Contact Info</h5>
-              <ul className="list-unstyled text-light">
-                <li className="mb-2"><i className="bi bi-telephone me-2"></i> +880 1234-567890</li>
-                <li className="mb-2"><i className="bi bi-envelope me-2"></i> info@sardarestate.com</li>
-                <li className="mb-2"><i className="bi bi-geo-alt me-2"></i> Gulshan Avenue, Dhaka</li>
+            
+            <div className="space-y-4">
+              <h5 className="text-lg font-bold text-white mb-4">Contact Info</h5>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-center space-x-3">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span>+880 1234-567890</span>
+                </li>
+                <li className="flex items-center space-x-3">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>info@sardarestate.com</span>
+                </li>
+                <li className="flex items-center space-x-3">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Gulshan Avenue, Dhaka</span>
+                </li>
               </ul>
             </div>
-            <div className="col-lg-3">
-              <h5 className="fw-bold mb-3">Follow Us</h5>
-              <div className="d-flex gap-3">
-                <a href="#" className="text-light fs-5"><i className="bi bi-facebook"></i></a>
-                <a href="#" className="text-light fs-5"><i className="bi bi-twitter"></i></a>
-                <a href="#" className="text-light fs-5"><i className="bi bi-instagram"></i></a>
-                <a href="#" className="text-light fs-5"><i className="bi bi-linkedin"></i></a>
+            
+            <div className="space-y-4">
+              <h5 className="text-lg font-bold text-white mb-4">Newsletter</h5>
+              <p className="text-gray-300 mb-4">Subscribe to get updates on new properties</p>
+              <div className="flex space-x-2">
+                <input 
+                  type="email" 
+                  placeholder="Your email" 
+                  className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:border-blue-500 text-white placeholder-gray-400"
+                />
+                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-300">
+                  Subscribe
+                </button>
               </div>
             </div>
           </div>
-          <hr className="my-4" />
-          <div className="text-center text-light">
-            <p className="mb-0">&copy; 2024 Sardar Real Estate. All rights reserved.</p>
+          
+          <div className="border-t border-white/10 mt-12 pt-8 text-center">
+            <p className="text-gray-400">
+              &copy; 2024 Sardar Real Estate. All rights reserved. | Crafted with excellence
+            </p>
           </div>
         </div>
       </footer>
@@ -408,26 +506,31 @@ const HomePage = () => {
       {/* Custom Styles */}
       <style>
         {`
-          .text-shadow {
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+          @keyframes fade-in-up {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          .hover-shadow:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 1rem 3rem rgba(0,0,0,.175) !important;
-            transition: all 0.3s ease;
+          .animate-fade-in-up {
+            animation: fade-in-up 0.8s ease-out;
           }
-          .hover-lift:hover {
-            transform: translateY(-2px);
-            transition: all 0.3s ease;
+          .animate-delay-200 {
+            animation-delay: 0.2s;
           }
-          .property-image {
-            transition: transform 0.3s ease;
+          .animate-delay-400 {
+            animation-delay: 0.4s;
           }
-          .property-card:hover .property-image {
-            transform: scale(1.05);
+          .animate-spin-slow {
+            animation: spin 3s linear infinite;
           }
-          .transition-all {
-            transition: all 0.3s ease;
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
           }
         `}
       </style>

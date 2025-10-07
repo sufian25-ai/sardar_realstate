@@ -8,6 +8,7 @@ import Properties from './pages/Properties';
 import PropertyForm from './pages/PropertyForm';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AgentDashboard from './pages/agent/AgentDashboard';
+import UserProfile from './pages/user/UserProfile';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -51,6 +52,12 @@ function App() {
             <Route path="/agent/dashboard" element={
               <ProtectedRoute>
                 <AgentDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/user/profile" element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             } />
 
