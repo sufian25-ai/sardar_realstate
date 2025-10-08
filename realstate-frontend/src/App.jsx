@@ -12,6 +12,9 @@ import UserProfile from './pages/user/UserProfile';
 import StateManagement from './pages/admin/StateManagement';
 import CityManagement from './pages/admin/CityManagement';
 import CreatePropertyWithUpload from './pages/admin/CreatePropertyWithUpload';
+import PropertyList from './pages/admin/PropertyList';
+import UserList from './pages/admin/UserList';
+import DashboardContent from './pages/admin/DashboardContent';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -67,6 +70,23 @@ function App() {
                 <CreatePropertyWithUpload />
               </ProtectedRoute>
             } />
+            <Route path="/admin/properties/list" element={
+              <ProtectedRoute>
+                <PropertyList />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/admin/users" element={
+              <ProtectedRoute>
+                <UserList />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <DashboardContent />
+              </ProtectedRoute>
+            } />
+          
  {/* Agent Panel*/}
             <Route path="/agent/dashboard" element={
               <ProtectedRoute>

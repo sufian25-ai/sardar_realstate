@@ -19,6 +19,7 @@ const AdminPanel = () => {
     { name: "Users", icon: <Users size={18} />, path: "/admin/users" },
      { name: "Agents", icon: <Users size={18} />, path: "/admin/agents" },
     { name: "Properties", icon: <Building2 size={18} />, path: "/admin/properties" },
+    { name: "Property List", icon: <Building2 size={18} />, path: "/admin/properties/list" },
      { name: "States", icon: <Users size={18} />, path: "/admin/states" },
       { name: "Cities", icon: <Users size={18} />, path: "/admin/cities" },
        { name: "Bookings", icon: <Users size={18} />, path: "/admin/bookings" },
