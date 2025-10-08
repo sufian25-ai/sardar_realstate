@@ -6,294 +6,244 @@ use App\Http\Controllers\Controller;
 use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
 
 class PropertyController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource with filters.
      */
     public function index(Request $request)
     {
         try {
-            $query = Property::with('user:id,name,email', 'city:cid,cname', 'state:sid,sname');
-
-            // Filters
-            if ($request->has('type')) {
-                $query->where('type', $request->type);
-            }
-
-            if ($request->has('stype')) {
-                $query->where('stype', $request->stype);
-            }
-
-            if ($request->has('city_id')) {
-                $query->where('city_id', $request->city_id);
-            }
-
-            if ($request->has('state_id')) {
-                $query->where('state_id', $request->state_id);
-            }
-
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
-            }
-
-            if ($request->has('featured') && $request->featured == 'true') {
-                $query->featured();
-            }
-
-            if ($request->has('verified') && $request->verified == 'true') {
-                $query->verified();
-            }
-
-            // Price range
-            if ($request->has('min_price')) {
-                $query->where('price', '>=', $request->min_price);
-            }
-
-            if ($request->has('max_price')) {
-                $query->where('price', '<=', $request->max_price);
-            }
-
-            // Bedrooms
-            if ($request->has('bedroom')) {
-                $query->where('bedroom', $request->bedroom);
-            }
+            $query = Property::with(['user:id,name,email', 'city:cid,cname', 'state:sid,sname']);
+            $this->applyFilters($query, $request);
 
             $properties = $query->paginate(10);
 
-            return response()->json([
-                'response_code' => 200,
-                'status' => 'success',
-                'message' => 'Properties fetched successfully',
-                'data' => $properties,
-            ]);
+            return $this->successResponse('Properties fetched successfully', $properties);
         } catch (\Exception $e) {
             Log::error('Properties Fetch Error: ' . $e->getMessage());
-
-            return response()->json([
-                'response_code' => 500,
-                'status' => 'error',
-                'message' => 'Failed to fetch properties',
-            ], 500);
+            return $this->errorResponse('Failed to fetch properties', 500);
         }
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource with file uploads.
      */
     public function store(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'slug' => 'required|string|max:100|unique:properties',
-                'pcontent' => 'required|string',
-                'type' => 'required|in:apartment,house,land,commercial',
-                'stype' => 'required|in:sale,rent',
-                'bedroom' => 'nullable|integer|min:0',
-                'bathroom' => 'nullable|integer|min:0',
-                'balcony' => 'nullable|integer|min:0',
-                'kitchen' => 'nullable|integer|min:0',
-                'drawing_room' => 'nullable|integer|min:0',
-                'dining_room' => 'nullable|integer|min:0',
-                'floor' => 'nullable|string|max:50',
-                'size' => 'nullable|numeric|min:0',
-                'price' => 'required|numeric|min:0',
-                'location' => 'required|string|max:255',
-                'city_id' => 'required|exists:cities,cid',
-                'state_id' => 'required|exists:states,sid',
-                'feature' => 'nullable|string',
-                'pimage' => 'nullable|string|max:255',
-                'pimage1' => 'nullable|string|max:255',
-                'pimage2' => 'nullable|string|max:255',
-                'pimage3' => 'nullable|string|max:255',
-                'pimage4' => 'nullable|string|max:255',
-                'status' => 'in:available,sold,rented',
-                'mapimage' => 'nullable|string|max:255',
-                'topmapimage' => 'nullable|string|max:255',
-                'groundmapimage' => 'nullable|string|max:255',
-                'totalfloor' => 'nullable|integer|min:0',
-                'featured' => 'boolean',
-                'verified' => 'boolean',
-                'date' => 'nullable|date',
-            ]);
+            // Validate all inputs including files
+            $validated = $this->validateProperty($request);
 
-            $validated['user_id'] = $request->user()->id;
+            // Handle file uploads
+            foreach (['pimage','pimage1','pimage2','pimage3','pimage4','mapimage','groundmapimage'] as $fileField) {
+                if ($request->hasFile($fileField)) {
+                    $file = $request->file($fileField);
+                    $filename = time().'_'.$file->getClientOriginalName();
+                    $file->storeAs('public/properties', $filename);
+                    $validated[$fileField] = 'storage/properties/'.$filename;
+                }
+            }
+
+            // Set user_id from auth if not provided
+            if (!isset($validated['user_id'])) {
+                $validated['user_id'] = auth()->id();
+            }
+
+            // Generate unique slug
+            $validated['slug'] = $this->generateUniqueSlug($validated['title'], $validated['slug'] ?? null);
 
             $property = Property::create($validated);
 
-            return response()->json([
-                'response_code' => 201,
-                'status' => 'success',
-                'message' => 'Property created successfully',
-                'data' => $property->load('user:id,name,email', 'city:cid,cname', 'state:sid,sname'),
-            ], 201);
+            return $this->successResponse(
+                'Property created successfully',
+                $property->load(['user:id,name,email', 'city:cid,cname', 'state:sid,sname']),
+                201
+            );
         } catch (ValidationException $e) {
-            return response()->json([
-                'response_code' => 422,
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return $this->validationErrorResponse($e);
         } catch (\Exception $e) {
             Log::error('Property Create Error: ' . $e->getMessage());
-
-            return response()->json([
-                'response_code' => 500,
-                'status' => 'error',
-                'message' => 'Failed to create property',
-            ], 500);
+            return $this->errorResponse('Failed to create property', 500);
         }
     }
 
     /**
-     * Display the specified resource.
+     * Display a single property.
      */
     public function show(string $id)
     {
         try {
-            $property = Property::with('user:id,name,email', 'city:cid,cname', 'state:sid,sname')->findOrFail($id);
-
-            // Increment view count
+            $property = Property::with(['user:id,name,email', 'city:cid,cname', 'state:sid,sname'])->findOrFail($id);
             $property->incrementViewCount();
 
-            return response()->json([
-                'response_code' => 200,
-                'status' => 'success',
-                'message' => 'Property fetched successfully',
-                'data' => $property,
-            ]);
+            return $this->successResponse('Property fetched successfully', $property);
         } catch (\Exception $e) {
             Log::error('Property Show Error: ' . $e->getMessage());
-
-            return response()->json([
-                'response_code' => 404,
-                'status' => 'error',
-                'message' => 'Property not found',
-            ], 404);
+            return $this->errorResponse('Property not found', 404);
         }
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a property.
      */
     public function update(Request $request, string $id)
     {
         try {
             $property = Property::findOrFail($id);
+            $validated = $this->validateProperty($request, $id);
 
-            // Check authorization - only owner or admin can update
-            if ($property->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'response_code' => 403,
-                    'status' => 'error',
-                    'message' => 'Unauthorized',
-                ], 403);
+            // Handle file uploads
+            foreach (['pimage','pimage1','pimage2','pimage3','pimage4','mapimage','groundmapimage'] as $fileField) {
+                if ($request->hasFile($fileField)) {
+                    $file = $request->file($fileField);
+                    $filename = time().'_'.$file->getClientOriginalName();
+                    $file->storeAs('public/properties', $filename);
+                    $validated[$fileField] = 'storage/properties/'.$filename;
+                }
             }
 
-            $validated = $request->validate([
-                'title' => 'sometimes|required|string|max:255',
-                'slug' => 'sometimes|required|string|max:100|unique:properties,slug,' . $id . ',pid',
-                'pcontent' => 'sometimes|required|string',
-                'type' => 'sometimes|required|in:apartment,house,land,commercial',
-                'stype' => 'sometimes|required|in:sale,rent',
-                'bedroom' => 'nullable|integer|min:0',
-                'bathroom' => 'nullable|integer|min:0',
-                'balcony' => 'nullable|integer|min:0',
-                'kitchen' => 'nullable|integer|min:0',
-                'drawing_room' => 'nullable|integer|min:0',
-                'dining_room' => 'nullable|integer|min:0',
-                'floor' => 'nullable|string|max:50',
-                'size' => 'nullable|numeric|min:0',
-                'price' => 'sometimes|required|numeric|min:0',
-                'location' => 'sometimes|required|string|max:255',
-                'city_id' => 'sometimes|required|exists:cities,cid',
-                'state_id' => 'sometimes|required|exists:states,sid',
-                'feature' => 'nullable|string',
-                'pimage' => 'nullable|string|max:255',
-                'pimage1' => 'nullable|string|max:255',
-                'pimage2' => 'nullable|string|max:255',
-                'pimage3' => 'nullable|string|max:255',
-                'pimage4' => 'nullable|string|max:255',
-                'status' => 'in:available,sold,rented',
-                'mapimage' => 'nullable|string|max:255',
-                'topmapimage' => 'nullable|string|max:255',
-                'groundmapimage' => 'nullable|string|max:255',
-                'totalfloor' => 'nullable|integer|min:0',
-                'featured' => 'boolean',
-                'verified' => 'boolean',
-                'date' => 'nullable|date',
-            ]);
+            // Update slug if needed
+            if (isset($validated['title']) || isset($validated['slug'])) {
+                $validated['slug'] = $this->generateUniqueSlug(
+                    $validated['title'] ?? $property->title,
+                    $validated['slug'] ?? null,
+                    $id
+                );
+            }
 
             $property->update($validated);
 
-            return response()->json([
-                'response_code' => 200,
-                'status' => 'success',
-                'message' => 'Property updated successfully',
-                'data' => $property->load('user:id,name,email', 'city:cid,cname', 'state:sid,sname'),
-            ]);
+            return $this->successResponse(
+                'Property updated successfully',
+                $property->load(['user:id,name,email', 'city:cid,cname', 'state:sid,sname'])
+            );
         } catch (ValidationException $e) {
-            return response()->json([
-                'response_code' => 422,
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return $this->validationErrorResponse($e);
         } catch (\Exception $e) {
             Log::error('Property Update Error: ' . $e->getMessage());
-
-            return response()->json([
-                'response_code' => 500,
-                'status' => 'error',
-                'message' => 'Failed to update property',
-            ], 500);
+            return $this->errorResponse('Failed to update property', 500);
         }
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a property.
      */
-    public function destroy(Request $request, string $id)
+    public function destroy(string $id)
     {
         try {
             $property = Property::findOrFail($id);
 
-            // Check authorization - only owner or admin can delete
-            if ($property->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'response_code' => 403,
-                    'status' => 'error',
-                    'message' => 'Unauthorized',
-                ], 403);
-            }
-
-            // Check if property has active rents or payments
-            if ($property->rentApplications()->where('status', 'approved')->count() > 0) {
-                return response()->json([
-                    'response_code' => 400,
-                    'status' => 'error',
-                    'message' => 'Cannot delete property with active rentals',
-                ], 400);
+            if ($property->rentApplications()->count() > 0 || $property->payments()->count() > 0) {
+                return $this->errorResponse('Cannot delete property with associated rent applications or payments', 400);
             }
 
             $property->delete();
 
-            return response()->json([
-                'response_code' => 200,
-                'status' => 'success',
-                'message' => 'Property deleted successfully',
-            ]);
+            return $this->successResponse('Property deleted successfully', null);
         } catch (\Exception $e) {
             Log::error('Property Delete Error: ' . $e->getMessage());
-
-            return response()->json([
-                'response_code' => 500,
-                'status' => 'error',
-                'message' => 'Failed to delete property',
-            ], 500);
+            return $this->errorResponse('Failed to delete property', 500);
         }
+    }
+
+    // ------------------------ Private Helpers ------------------------
+
+    private function applyFilters($query, Request $request)
+    {
+        if ($request->has('type')) $query->byType($request->type);
+        if ($request->has('stype')) $query->{$request->stype === 'sale' ? 'forSale' : 'forRent'}();
+        if ($request->has('city_id')) $query->byCity($request->city_id);
+        if ($request->has('state_id')) $query->byState($request->state_id);
+        if ($request->has('status')) $query->where('status', $request->status);
+        if ($request->has('featured') && $request->featured == 'true') $query->featured();
+        if ($request->has('verified') && $request->verified == 'true') $query->verified();
+        if ($request->has('min_price') && $request->has('max_price')) $query->priceRange($request->min_price, $request->max_price);
+        if ($request->has('user_id')) $query->where('user_id', $request->user_id);
+    }
+
+    private function validateProperty(Request $request, $id = null)
+    {
+        $rules = [
+            'title' => ($id ? 'sometimes|required' : 'required') . '|string|max:200',
+            'slug' => ($id ? 'sometimes|required|unique:properties,slug,' . $id . ',pid' : 'nullable|string|max:220'),
+            'pcontent' => ($id ? 'sometimes|required' : 'required') . '|string',
+            'type' => ($id ? 'sometimes|required' : 'required') . '|string|max:100',
+            'stype' => ($id ? 'sometimes|required' : 'required') . '|in:sale,rent',
+            'bedroom' => 'nullable|integer|min:0',
+            'bathroom' => 'nullable|integer|min:0',
+            'balcony' => 'nullable|integer|min:0',
+            'kitchen' => 'nullable|integer|min:0',
+            'drawing_room' => 'nullable|integer|min:0',
+            'dining_room' => 'nullable|integer|min:0',
+            'floor' => 'nullable|string|max:50',
+            'totalfloor' => 'nullable|integer|min:0',
+            'size' => 'nullable|integer|min:0',
+            'price' => ($id ? 'sometimes|required' : 'required') . '|numeric|min:0',
+            'location' => ($id ? 'sometimes|required' : 'required') . '|string',
+            'city_id' => ($id ? 'sometimes|required' : 'required') . '|exists:cities,cid',
+            'state_id' => ($id ? 'sometimes|required' : 'required') . '|exists:states,sid',
+            'feature' => 'nullable|string',
+            'pimage' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'pimage1' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'pimage2' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'pimage3' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'pimage4' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'mapimage' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'groundmapimage' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'user_id' => 'nullable|exists:users,id',
+            'status' => 'in:available,sold,rented,pending',
+            'featured' => 'boolean',
+            'verified' => 'boolean',
+        ];
+
+        return $request->validate($rules);
+    }
+
+    private function generateUniqueSlug($title, $slug = null, $id = null)
+    {
+        $slug = $slug ? Str::slug($slug) : Str::slug($title) . '-' . time();
+        $originalSlug = $slug;
+        $count = 1;
+
+        while (Property::where('slug', $slug)->when($id, fn($q) => $q->where('pid', '!=', $id))->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+
+        return $slug;
+    }
+
+    private function successResponse($message, $data = null, $code = 200)
+    {
+        return response()->json([
+            'response_code' => $code,
+            'status' => 'success',
+            'message' => $message,
+            'data' => $data,
+        ], $code);
+    }
+
+    private function errorResponse($message, $code = 500)
+    {
+        return response()->json([
+            'response_code' => $code,
+            'status' => 'error',
+            'message' => $message,
+        ], $code);
+    }
+
+    private function validationErrorResponse(ValidationException $e)
+    {
+        return response()->json([
+            'response_code' => 422,
+            'status' => 'error',
+            'message' => 'Validation failed',
+            'errors' => $e->errors(),
+        ], 422);
     }
 }

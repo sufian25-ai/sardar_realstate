@@ -6,9 +6,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Properties from './pages/Properties';
 import PropertyForm from './pages/PropertyForm';
-import AdminNavbar from './pages/admin/AdminDashboard';
+import AdminPanel from './components/AdminPanel';
 import AgentDashboard from './pages/agent/AgentDashboard';
 import UserProfile from './pages/user/UserProfile';
+import StateManagement from './pages/admin/StateManagement';
+import CityManagement from './pages/admin/CityManagement';
+import CreatePropertyWithUpload from './pages/admin/CreatePropertyWithUpload';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -43,12 +46,28 @@ function App() {
             } />
             
             {/* Protected Routes - Only logged in users can access */}
+             {/* Admin Panel */}
              <Route path="/admin/dashboard" element={
               <ProtectedRoute>
-                <AdminNavbar />
+                <AdminPanel />
               </ProtectedRoute>
             } />
-
+            <Route path="/admin/states" element={
+              <ProtectedRoute>
+                <StateManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/cities" element={
+              <ProtectedRoute>
+                <CityManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/properties" element={
+              <ProtectedRoute>
+                <CreatePropertyWithUpload />
+              </ProtectedRoute>
+            } />
+ {/* Agent Panel*/}
             <Route path="/agent/dashboard" element={
               <ProtectedRoute>
                 <AgentDashboard />

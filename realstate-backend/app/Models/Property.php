@@ -26,6 +26,7 @@ class Property extends Model
         'drawing_room',
         'dining_room',
         'floor',
+        'totalfloor',
         'size',
         'price',
         'location',
@@ -40,9 +41,7 @@ class Property extends Model
         'user_id',
         'status',
         'mapimage',
-        'topmapimage',
         'groundmapimage',
-        'totalfloor',
         'featured',
         'verified',
         'view_count',
@@ -50,10 +49,19 @@ class Property extends Model
     ];
 
     protected $casts = [
+        'bedroom' => 'integer',
+        'bathroom' => 'integer',
+        'balcony' => 'integer',
+        'kitchen' => 'integer',
+        'drawing_room' => 'integer',
+        'dining_room' => 'integer',
+        'totalfloor' => 'integer',
+        'size' => 'integer',
         'price' => 'decimal:2',
         'featured' => 'boolean',
         'verified' => 'boolean',
-        'date' => 'datetime'
+        'view_count' => 'integer',
+        'date' => 'datetime',
     ];
 
     // Relationships
@@ -82,7 +90,7 @@ class Property extends Model
         return $this->hasMany(Payment::class, 'pid');
     }
 
-    // Scopes for easy querying
+    // Scopes for easier queries
     public function scopeAvailable($query)
     {
         return $query->where('status', 'available');
@@ -123,22 +131,12 @@ class Property extends Model
         return $query->where('type', $type);
     }
 
-    public function scopeByBhk($query, $bhk)
-    {
-        return $query->where('bhk', $bhk);
-    }
-
     public function scopePriceRange($query, $min, $max)
     {
         return $query->whereBetween('price', [$min, $max]);
     }
 
     // Helper methods
-    public function getFormattedPriceAttribute()
-    {
-        return '৳ ' . number_format($this->price, 2);
-    }
-
     public function incrementViewCount()
     {
         $this->view_count++;
@@ -158,5 +156,10 @@ class Property extends Model
     public function isForRent()
     {
         return $this->stype === 'rent';
+    }
+
+    public function getFormattedPriceAttribute()
+    {
+        return '৳ ' . number_format($this->price, 2);
     }
 }

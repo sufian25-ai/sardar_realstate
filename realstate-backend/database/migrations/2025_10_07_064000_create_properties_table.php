@@ -16,14 +16,15 @@ class CreatePropertiesTable extends Migration
             $table->longText('pcontent');
             $table->string('type', 100); // apartment, house, villa, commercial, etc.
             $table->enum('stype', ['sale', 'rent']);
-            $table->integer('bedroom');
-            $table->integer('bathroom');
-            $table->integer('balcony');
-            $table->integer('kitchen');
-            $table->integer('drawing_room');
-            $table->integer('dining_room');
-            $table->string('floor', 50);
-            $table->integer('size'); // in sq ft
+            $table->integer('bedroom')->nullable();
+            $table->integer('bathroom')->nullable();
+            $table->integer('balcony')->nullable();
+            $table->integer('kitchen')->nullable();
+            $table->integer('drawing_room')->nullable();
+            $table->integer('dining_room')->nullable();
+            $table->string('floor', 50)->nullable();
+            $table->integer('totalfloor')->nullable();
+            $table->integer('size')->nullable(); // in sq ft
             $table->decimal('price', 12, 2);
             $table->text('location');
 
@@ -31,9 +32,9 @@ class CreatePropertiesTable extends Migration
             $table->foreignId('city_id')->constrained('cities', 'cid');
             $table->foreignId('state_id')->constrained('states', 'sid');
 
-            $table->longText('feature');
-            $table->string('pimage', 300);
-            $table->string('image1', 300)->nullable();
+            $table->longText('feature')->nullable();
+            $table->string('pimage', 300)->nullable();
+            $table->string('pimage1', 300)->nullable();
             $table->string('pimage2', 300)->nullable();
             $table->string('pimage3', 300)->nullable();
             $table->string('pimage4', 300)->nullable();
@@ -43,7 +44,6 @@ class CreatePropertiesTable extends Migration
 
             $table->string('mapimage', 300)->nullable();
             $table->string('groundmapimage', 300)->nullable();
-            $table->string('totalfloor', 50)->nullable();
 
             // Additional fields for better search
             $table->boolean('featured')->default(false);
@@ -65,5 +65,4 @@ class CreatePropertiesTable extends Migration
     {
         Schema::dropIfExists('properties');
     }
-};
-
+}
