@@ -14,8 +14,8 @@ const PropertyList = () => {
           },
         });
 
-        // Laravel successResponse অনুযায়ী data.data তে মূল property লিস্ট থাকবে
-        setProperties(response.data.data.data); // because pagination => data.data.data
+        // Laravel pagination: data.data.data
+        setProperties(response.data.data.data);
       } catch (error) {
         console.error("Error fetching properties:", error);
       }
@@ -35,7 +35,11 @@ const PropertyList = () => {
             <div key={property.pid} className="col-md-4 mb-4">
               <div className="card shadow-sm">
                 <img
-                  src={`http://127.0.0.1:8000/${property.pimage}`}
+                  src={
+                    property.pimage
+                      ? `http://127.0.0.1:8000/${property.pimage}`
+                      : "/placeholder.jpg"
+                  }
                   alt={property.title}
                   className="card-img-top"
                   style={{ height: "200px", objectFit: "cover" }}

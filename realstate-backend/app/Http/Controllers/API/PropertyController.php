@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class PropertyController extends Controller
 {
@@ -36,25 +37,33 @@ class PropertyController extends Controller
     public function store(Request $request)
     {
         try {
-            // Validate all inputs including files
             $validated = $this->validateProperty($request);
+            $fileData = [];
 
             // Handle file uploads
             foreach (['pimage','pimage1','pimage2','pimage3','pimage4','mapimage','groundmapimage'] as $fileField) {
                 if ($request->hasFile($fileField)) {
                     $file = $request->file($fileField);
-                    $filename = time().'_'.$file->getClientOriginalName();
-                    $file->storeAs('public/properties', $filename);
-                    $validated[$fileField] = 'storage/properties/'.$filename;
+
+                    $destinationPath = public_path('properties');
+
+                    if (!File::exists($destinationPath)) {
+                        File::makeDirectory($destinationPath, 0777, true, true);
+                    }
+
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $file->move($destinationPath, $filename);
+
+                    $fileData[$fileField] = 'properties/' . $filename;
                 }
             }
 
-            // Set user_id from auth if not provided
+            $validated = array_merge($validated, $fileData);
+
             if (!isset($validated['user_id'])) {
                 $validated['user_id'] = auth()->id();
             }
 
-            // Generate unique slug
             $validated['slug'] = $this->generateUniqueSlug($validated['title'], $validated['slug'] ?? null);
 
             $property = Property::create($validated);
@@ -96,18 +105,27 @@ class PropertyController extends Controller
         try {
             $property = Property::findOrFail($id);
             $validated = $this->validateProperty($request, $id);
+            $fileData = [];
 
-            // Handle file uploads
             foreach (['pimage','pimage1','pimage2','pimage3','pimage4','mapimage','groundmapimage'] as $fileField) {
                 if ($request->hasFile($fileField)) {
                     $file = $request->file($fileField);
-                    $filename = time().'_'.$file->getClientOriginalName();
-                    $file->storeAs('public/properties', $filename);
-                    $validated[$fileField] = 'storage/properties/'.$filename;
+
+                    $destinationPath = public_path('properties');
+
+                    if (!File::exists($destinationPath)) {
+                        File::makeDirectory($destinationPath, 0777, true, true);
+                    }
+
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $file->move($destinationPath, $filename);
+
+                    $fileData[$fileField] = 'properties/' . $filename;
                 }
             }
 
-            // Update slug if needed
+            $validated = array_merge($validated, $fileData);
+
             if (isset($validated['title']) || isset($validated['slug'])) {
                 $validated['slug'] = $this->generateUniqueSlug(
                     $validated['title'] ?? $property->title,
