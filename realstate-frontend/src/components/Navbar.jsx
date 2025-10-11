@@ -123,17 +123,7 @@ const Navbar = () => {
                         {user.role === "agent" && (
                           <>
                             <Link 
-                              to="/profiledashboard" 
-                              onClick={() => setIsDropdownOpen(false)}
-                              className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-200 group"
-                            >
-                              <div className="w-9 h-9 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <User size={18} className="text-blue-600" />
-                              </div>
-                              <span className="font-medium">Agent Profile</span>
-                            </Link>
-                            <Link 
-                              to="/agent/dashboard" 
+                              to="/agent" 
                               onClick={() => setIsDropdownOpen(false)}
                               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 rounded-xl transition-all duration-200 group"
                             >

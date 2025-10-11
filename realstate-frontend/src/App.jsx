@@ -5,7 +5,7 @@ import HomePage from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Properties from './pages/Properties';
-import PropertyForm from './pages/PropertyForm';
+import PropertyDetails from './pages/PropertyDetails';
 
 // Admin Pages
 import AdminPanel from './components/AdminPanel';
@@ -22,8 +22,12 @@ import UserList from './pages/admin/UserList';
 // import Settings from './pages/admin/Settings';
 
 // Agent/User Pages
+import AgentAdmin from './components/AgentAdmin';
 import AgentDashboard from './pages/agent/AgentDashboard';
+import AgentUsers from './pages/agent/AgentUsers';
+//User Pages
 import UserProfile from './pages/user/UserProfile';
+
 
 import './App.css';
 
@@ -66,15 +70,25 @@ function App() {
           </Route>
 
           {/* Agent Panel */}
-          <Route path="/agent/dashboard" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
+          <Route path="/agent" element={<ProtectedRoute><AgentAdmin /></ProtectedRoute>} >
+           <Route index element={<AgentDashboard />} /> {/* default /admin */}
+            <Route path="dashboard" element={<AgentDashboard />} />
+            <Route path="users" element={<AgentUsers />} />
+          
+          
+
+          </Route>
+
 
           {/* User Pages */}
           <Route path="/user/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
 
           {/* Properties */}
-          <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
-          <Route path="/properties/new" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
-          <Route path="/properties/:id" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
+          <Route path="/properties" element={<Properties />} />
+          {/* <Route path="/properties/new" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
+          <Route path="/properties/:id" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} /> */}
+          <Route path="/properties/:id" element={<PropertyDetails />} />
+
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" />} />

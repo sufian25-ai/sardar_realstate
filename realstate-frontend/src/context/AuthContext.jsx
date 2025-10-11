@@ -13,13 +13,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      api.get('/user-info')
+      api.get('/get-user')
         .then(response => {
-          // Laravel controller returns paginated list, so we can get the first user
-          const users = response.data.data_user_list?.data || [];
-          if (users.length > 0) {
-            setUser(users[0]);
-          }
+          setUser(response.data.user);
         })
         .catch(() => {
           localStorage.removeItem('token');

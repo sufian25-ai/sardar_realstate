@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,13 +9,12 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -28,7 +26,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -48,19 +46,27 @@ class User extends Authenticatable
         ];
     }
 
-    // Helper methods for roles
-    public function isUser(): bool
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin(): bool
     {
-        return $this->role === 'user';
+        return $this->role === 'admin';
     }
 
+    /**
+     * Check if user is agent
+     */
     public function isAgent(): bool
     {
         return $this->role === 'agent';
     }
 
-    public function isAdmin(): bool
+    /**
+     * Check if user is regular user
+     */
+    public function isUser(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'user';
     }
 }

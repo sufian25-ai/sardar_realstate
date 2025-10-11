@@ -1,44 +1,66 @@
+
 <?php
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\AuthenticationController;
 
-Route::group(['namespace' => 'App\Http\Controllers\API'], function () {
-    // --------------- Register and Login ----------------//
-    Route::post('register', 'AuthenticationController@register')->name('register');
-    Route::post('login', 'AuthenticationController@login')->name('login');
+// Public routes (no authentication required)
+Route::post('register', [AuthenticationController::class, 'register'])->name('api.register');
+Route::post('login', [AuthenticationController::class, 'login'])->name('api.login');
 
-    // ------------------ Get Data ----------------------//
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('get-user', 'AuthenticationController@userInfo')->name('get-user');
-        Route::post('logout', 'AuthenticationController@logOut')->name('logout');
+// Test route to check API is working
+Route::get('test', function() {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'API is working',
+        'timestamp' => now()
+    ]);
+});
 
-        // ------------------ States ----------------------//
-        Route::apiResource('states', 'StateController');
+// Protected routes (authentication required)
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Auth routes
+    Route::get('me', [AuthenticationController::class, 'me'])->name('api.me');
+    Route::get('get-user', [AuthenticationController::class, 'userInfo'])->name('api.get-user');
+    Route::post('logout', [AuthenticationController::class, 'logOut'])->name('api.logout');
 
-        // ------------------ Cities ----------------------//
-        Route::apiResource('cities', 'CityController');
+    // States
+    Route::apiResource('states', App\Http\Controllers\API\StateController::class);
 
-        // ------------------ Properties ----------------------//
-        Route::apiResource('properties', 'PropertyController');
+    // Cities
+    Route::apiResource('cities', App\Http\Controllers\API\CityController::class);
 
-        // ------------------ Rent Applications ----------------------//
-        Route::apiResource('rents', 'RentController');
-        Route::post('rents/{id}/approve', 'RentController@approve')->name('rents.approve');
+    // Properties
+    Route::apiResource('properties', App\Http\Controllers\API\PropertyController::class);
 
-        // ------------------ Payments ----------------------//
-        Route::apiResource('payments', 'PaymentController');
-        Route::post('payments/{id}/approve', 'PaymentController@approve')->name('payments.approve');
+    // Rent Applications
+    Route::apiResource('rents', App\Http\Controllers\API\RentController::class);
+    Route::post('rents/{id}/approve', [App\Http\Controllers\API\RentController::class, 'approve'])->name('api.rents.approve');
 
-        // ------------------ Rent Payments ----------------------//
-        Route::apiResource('rent-payments', 'RentPaymentController');
-        Route::post('rent-payments/{id}/mark-paid', 'RentPaymentController@markAsPaid')->name('rent-payments.mark-paid');
+    // Payments
+    Route::apiResource('payments', App\Http\Controllers\API\PaymentController::class);
+    Route::post('payments/{id}/approve', [App\Http\Controllers\API\PaymentController::class, 'approve'])->name('api.payments.approve');
 
-        // ------------------ Feedback ----------------------//
-        Route::apiResource('feedbacks', 'FeedbackController');
-        Route::post('feedbacks/{id}/approve', 'FeedbackController@approve')->name('feedbacks.approve');
-        Route::post('feedbacks/{id}/feature', 'FeedbackController@feature')->name('feedbacks.feature');
+    // Rent Payments
+    Route::apiResource('rent-payments', App\Http\Controllers\API\RentPaymentController::class);
+    Route::post('rent-payments/{id}/mark-paid', [App\Http\Controllers\API\RentPaymentController::class, 'markAsPaid'])->name('api.rent-payments.mark-paid');
 
-        // ------------------ Financial Reports ----------------------//
-        Route::apiResource('financial-reports', 'FinancialReportController');
-    });
+    // Feedback
+    Route::apiResource('feedbacks', App\Http\Controllers\API\FeedbackController::class);
+    Route::post('feedbacks/{id}/approve', [App\Http\Controllers\API\FeedbackController::class, 'approve'])->name('api.feedbacks.approve');
+    Route::post('feedbacks/{id}/feature', [App\Http\Controllers\API\FeedbackController::class, 'feature'])->name('api.feedbacks.feature');
+
+    // Financial Reports
+    Route::apiResource('financial-reports', App\Http\Controllers\API\FinancialReportController::class);
+    // Inquiries
+    Route::get('inquiries', [App\Http\Controllers\API\InquiryController::class  
+    , 'index'])->name('api.inquiries.index');
+    Route::get('inquiries/{id}', [App\Http\Controllers\API\InquiryController::class, 'show'])->name('api.inquiries.show');
+    Route::put('inquiries/{id}', [App\Http\Controllers\API\InquiryController::class, 'update'])->name('api.inquiries.update');
+    Route::delete('inquiries/{id}', [App\Http\Controllers\API\InquiryController::class, 'destroy'])->name('api.inquiries.destroy'); 
+
+
+    
 });

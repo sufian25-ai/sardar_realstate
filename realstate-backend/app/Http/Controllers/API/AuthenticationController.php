@@ -17,6 +17,7 @@ class AuthenticationController extends Controller
      */
     public function register(Request $request)
     {
+        Log::info('Register attempt', $request->all());
         try {
             $validated = $request->validate([
                 'name'     => 'required|string|min:4',
@@ -37,7 +38,11 @@ class AuthenticationController extends Controller
                 'status'        => 'success',
                 'message'       => 'Successfully registered',
                 'user'          => $user
-            ], 201);
+            ], 201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
 
         } catch (ValidationException $e) {
             return response()->json([
@@ -45,7 +50,11 @@ class AuthenticationController extends Controller
                 'status'        => 'error',
                 'message'       => 'Validation failed',
                 'errors'        => $e->errors(),
-            ], 422);
+            ], 201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
         } catch (\Exception $e) {
             Log::error('Registration Error: ' . $e->getMessage());
 
@@ -54,7 +63,11 @@ class AuthenticationController extends Controller
                 'status'        => 'error',
                 'message'       => 'Registration failed',
                 'error'         => $e->getMessage()
-            ], 500);
+            ], 201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
         }
     }
 
@@ -74,7 +87,11 @@ class AuthenticationController extends Controller
                     'response_code' => 401,
                     'status'        => 'error',
                     'message'       => 'Unauthorized',
-                ], 401);
+                ], 201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
             }
 
             $user = Auth::user();
@@ -100,7 +117,11 @@ class AuthenticationController extends Controller
                 'status'        => 'error',
                 'message'       => 'Validation failed',
                 'errors'        => $e->errors(),
-            ], 422);
+            ], 201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
         } catch (\Exception $e) {
             Log::error('Login Error: ' . $e->getMessage());
 
@@ -108,7 +129,11 @@ class AuthenticationController extends Controller
                 'response_code' => 500,
                 'status'        => 'error',
                 'message'       => 'Login failed',
-            ], 500);
+            ], 201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
         }
     }
 
@@ -133,7 +158,11 @@ class AuthenticationController extends Controller
                 'response_code' => 500,
                 'status'        => 'error',
                 'message'       => 'Failed to fetch user list',
-            ], 500);
+            ],201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
         }
     }
 
@@ -159,7 +188,11 @@ class AuthenticationController extends Controller
                 'response_code' => 401,
                 'status'        => 'error',
                 'message'       => 'User not authenticated',
-            ], 401);
+            ], 201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
         } catch (\Exception $e) {
             Log::error('Logout Error: ' . $e->getMessage());
 
@@ -167,7 +200,11 @@ class AuthenticationController extends Controller
                 'response_code' => 500,
                 'status'        => 'error',
                 'message'       => 'An error occurred during logout',
-            ], 500);
+            ], 201)->withHeaders([
+    'Access-Control-Allow-Origin' => '*',
+    'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+]);
         }
     }
 }

@@ -377,102 +377,118 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Featured Properties */}
-      <section className="py-20 bg-white relative overflow-hidden">
-        <div className="absolute top-20 right-0 w-72 h-72 bg-gradient-to-bl from-blue-100 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-0 w-72 h-72 bg-gradient-to-tr from-purple-100 to-transparent rounded-full blur-3xl"></div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-full mb-6">
-              <Star className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                FEATURED LISTINGS
-              </span>
-            </div>
-            <h2 className="text-5xl font-black mb-6">
-              <span className="text-gray-900">Handpicked</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"> Premium Properties</span>
-            </h2>
-            <p className="text-gray-600 text-xl">
-              Discover our carefully curated selection of luxury properties
-            </p>
-          </div>
+{/* Featured Properties */}
+<section className="py-20 bg-white relative overflow-hidden">
+  <div className="absolute top-20 right-0 w-72 h-72 bg-gradient-to-bl from-blue-100 to-transparent rounded-full blur-3xl"></div>
+  <div className="absolute bottom-20 left-0 w-72 h-72 bg-gradient-to-tr from-purple-100 to-transparent rounded-full blur-3xl"></div>
+  
+  <div className="container mx-auto px-6 relative z-10">
+    <div className="text-center max-w-3xl mx-auto mb-16">
+      <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-full mb-6">
+        <Star className="w-4 h-4 text-blue-600" />
+        <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+          FEATURED LISTINGS
+        </span>
+      </div>
+      <h2 className="text-5xl font-black mb-6">
+        <span className="text-gray-900">Handpicked</span>
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"> Premium Properties</span>
+      </h2>
+      <p className="text-gray-600 text-xl">
+        Discover our carefully curated selection of luxury properties
+      </p>
+    </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProperties.length > 0 ? featuredProperties.map(property => (
-              <div key={property.pid} className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-gray-100 hover:border-transparent">
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={property.pimage ? `http://localhost:8000/${property.pimage}` : '/assets/placeholder.jpg'}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700" 
-                    alt={property.title}
-                    onError={(e) => {
-                      e.target.src = '/assets/placeholder.jpg';
-                    }}
-                  />
-                  {property.featured && (
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                        <Star className="w-3 h-3 fill-current" />
-                        Featured
-                      </div>
-                    </div>
-                  )}
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                      {property.type}
-                    </span>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {featuredProperties.length > 0 ? featuredProperties.map(property => (
+        <div key={property.pid} className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-gray-100 hover:border-transparent">
+          <div className="relative overflow-hidden">
+            <img 
+              src={property.pimage ? `http://localhost:8000/${property.pimage}` : '/assets/placeholder.jpg'}
+              className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700" 
+              alt={property.title}
+              onError={(e) => {
+                e.target.src = '/assets/placeholder.jpg';
+              }}
+            />
+            {property.featured && (
+              <div className="absolute top-4 left-4">
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                  <Star className="w-3 h-3 fill-current" />
+                  Featured
                 </div>
-                
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300 line-clamp-2">
-                    {property.title}
-                  </h3>
-                  <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3">
-                    ${property.price?.toLocaleString()}
-                  </div>
-                  <p className="text-gray-600 mb-4 flex items-center">
-                    <MapPin className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
-                    <span className="line-clamp-1">{property.location}</span>
-                  </p>
-                  
-                  <div className="flex justify-between items-center pt-4 border-t-2 border-gray-100">
-                    <div className="flex items-center gap-1 text-gray-700">
-                      <Bed className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm font-bold">{property.bedroom || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-700">
-                      <Bath className="w-4 h-4 text-purple-500" />
-                      <span className="text-sm font-bold">{property.bathroom || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-700">
-                      <Square className="w-4 h-4 text-pink-500" />
-                      <span className="text-sm font-bold">{property.size || 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )) : (
-              <div className="col-span-4 text-center py-12">
-                <p className="text-gray-500 text-lg">No featured properties available at the moment.</p>
               </div>
             )}
+            <div className="absolute top-4 right-4">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                {property.type}
+              </span>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
+          
+          <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300 line-clamp-2">
+              {property.title}
+            </h3>
+            <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3">
+              ${property.price?.toLocaleString()}
+            </div>
+            <p className="text-gray-600 mb-4 flex items-center">
+              <MapPin className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
+              <span className="line-clamp-1">{property.location}</span>
+            </p>
+            
+            <div className="flex justify-between items-center pt-4 border-t-2 border-gray-100">
+              <div className="flex items-center gap-1 text-gray-700">
+                <Bed className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-bold">{property.bedroom || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-1 text-gray-700">
+                <Bath className="w-4 h-4 text-purple-500" />
+                <span className="text-sm font-bold">{property.bathroom || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-1 text-gray-700">
+                <Square className="w-4 h-4 text-pink-500" />
+                <span className="text-sm font-bold">{property.size || 'N/A'}</span>
+              </div>
+            </div>
 
-          <div className="text-center mt-12">
+            {/* View Details Button */}
             <Link 
-              to="/properties" 
-              className="group inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
+              to={`/properties/${property.pid}`}
+              className="mt-4 w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-center block"
             >
-              <span>View All Properties</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              View Details
             </Link>
           </div>
         </div>
-      </section>
+      )) : (
+        <div className="col-span-4 text-center py-12">
+          <div className="text-6xl mb-4">🏠</div>
+          <p className="text-gray-500 text-lg mb-4">No featured properties available at the moment.</p>
+          <Link 
+            to="/properties" 
+            className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold px-6 py-3 rounded-xl hover:shadow-lg transition-all"
+          >
+            <span>Browse All Properties</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
+    </div>
+
+    <div className="text-center mt-12">
+      <Link 
+        to="/properties" 
+        className="group inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
+      >
+        <span>View All Properties</span>
+        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+      </Link>
+    </div>
+  </div>
+</section>
 
       {/* Services Section */}
       <section className="py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 relative overflow-hidden">

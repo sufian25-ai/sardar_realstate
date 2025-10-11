@@ -173,15 +173,16 @@ class PropertyController extends Controller
 
     private function applyFilters($query, Request $request)
     {
-        if ($request->has('type')) $query->byType($request->type);
-        if ($request->has('stype')) $query->{$request->stype === 'sale' ? 'forSale' : 'forRent'}();
-        if ($request->has('city_id')) $query->byCity($request->city_id);
-        if ($request->has('state_id')) $query->byState($request->state_id);
-        if ($request->has('status')) $query->where('status', $request->status);
+        if ($request->has('type') && !empty($request->type)) $query->byType($request->type);
+        if ($request->has('stype') && !empty($request->stype)) $query->{$request->stype === 'sale' ? 'forSale' : 'forRent'}();
+        if ($request->has('city_id') && !empty($request->city_id)) $query->byCity($request->city_id);
+        if ($request->has('state_id') && !empty($request->state_id)) $query->byState($request->state_id);
+        if ($request->has('status') && !empty($request->status)) $query->where('status', $request->status);
         if ($request->has('featured') && $request->featured == 'true') $query->featured();
         if ($request->has('verified') && $request->verified == 'true') $query->verified();
         if ($request->has('min_price') && $request->has('max_price')) $query->priceRange($request->min_price, $request->max_price);
-        if ($request->has('user_id')) $query->where('user_id', $request->user_id);
+        if ($request->has('user_id') && !empty($request->user_id)) $query->where('user_id', $request->user_id);
+        if ($request->has('bedroom') && !empty($request->bedroom)) $query->where('bedroom', '>=', $request->bedroom);
     }
 
     private function validateProperty(Request $request, $id = null)
