@@ -1,13 +1,16 @@
-
 <?php
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthenticationController;
+use App\Http\Controllers\API\InquiryController;
 
 // Public routes (no authentication required)
 Route::post('register', [AuthenticationController::class, 'register'])->name('api.register');
 Route::post('login', [AuthenticationController::class, 'login'])->name('api.login');
+
+// Public Inquiry Route - যাতে login ছাড়াই inquiry পাঠানো যায়
+Route::post('inquiries', [InquiryController::class, 'store'])->name('api.inquiries.store');
 
 // Test route to check API is working
 Route::get('test', function() {
@@ -20,7 +23,7 @@ Route::get('test', function() {
 
 // Protected routes (authentication required)
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     // Auth routes
     Route::get('me', [AuthenticationController::class, 'me'])->name('api.me');
     Route::get('get-user', [AuthenticationController::class, 'userInfo'])->name('api.get-user');
@@ -54,13 +57,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Financial Reports
     Route::apiResource('financial-reports', App\Http\Controllers\API\FinancialReportController::class);
-    // Inquiries
-    Route::get('inquiries', [App\Http\Controllers\API\InquiryController::class  
-    , 'index'])->name('api.inquiries.index');
-    Route::get('inquiries/{id}', [App\Http\Controllers\API\InquiryController::class, 'show'])->name('api.inquiries.show');
-    Route::put('inquiries/{id}', [App\Http\Controllers\API\InquiryController::class, 'update'])->name('api.inquiries.update');
-    Route::delete('inquiries/{id}', [App\Http\Controllers\API\InquiryController::class, 'destroy'])->name('api.inquiries.destroy'); 
 
-
-    
+    // Inquiries (Protected - for Admin/Agent)
+    Route::get('inquiries', [InquiryController::class, 'index'])->name('api.inquiries.index');
+    Route::get('inquiries/{id}', [InquiryController::class, 'show'])->name('api.inquiries.show');
+    Route::put('inquiries/{id}', [InquiryController::class, 'update'])->name('api.inquiries.update');
+    Route::delete('inquiries/{id}', [InquiryController::class, 'destroy'])->name('api.inquiries.destroy');
 });

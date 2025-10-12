@@ -25,6 +25,7 @@ import UserList from './pages/admin/UserList';
 import AgentAdmin from './components/AgentAdmin';
 import AgentDashboard from './pages/agent/AgentDashboard';
 import AgentUsers from './pages/agent/AgentUsers';
+import AgentInquiries from './pages/agent/AgentInquiries';
 //User Pages
 import UserProfile from './pages/user/UserProfile';
 
@@ -74,9 +75,7 @@ function App() {
            <Route index element={<AgentDashboard />} /> {/* default /admin */}
             <Route path="dashboard" element={<AgentDashboard />} />
             <Route path="users" element={<AgentUsers />} />
-          
-          
-
+            <Route path="inquiries" element={<AgentInquiries />} />
           </Route>
 
 

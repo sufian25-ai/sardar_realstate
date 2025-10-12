@@ -1,6 +1,5 @@
-// src/components/InquiryModal.jsx
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, MessageSquare, Send } from 'lucide-react';
+import { X, User, Mail, Phone, MessageSquare, Send, CheckCircle, AlertCircle } from 'lucide-react';
 
 const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
   const [formData, setFormData] = useState({
@@ -12,6 +11,8 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
   const [submitting, setSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
+  const API_URL = 'http://127.0.0.1:8000/api/inquiries';
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -19,7 +20,9 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
     // Validation check
     if (!formData.name.trim()) {
       setSubmitStatus({ type: 'error', message: 'Name is required!' });
@@ -30,13 +33,17 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
     setSubmitStatus(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/inquiries', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          email: formData.email || null,
+          phone: formData.phone || null,
+          message: formData.message || null,
           property_id: propertyId,
           status: 'new'
         })
@@ -44,8 +51,8 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
 
       const data = await response.json();
 
-      if (data.status === 'success') {
-        setSubmitStatus({ type: 'success', message: 'Inquiry sent successfully!' });
+      if (response.ok && data.status === 'success') {
+        setSubmitStatus({ type: 'success', message: 'Inquiry sent successfully! We will contact you soon.' });
         setTimeout(() => {
           setFormData({
             name: '',
@@ -57,11 +64,17 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
           setSubmitStatus(null);
         }, 2000);
       } else {
-        setSubmitStatus({ type: 'error', message: data.message || 'Failed to send inquiry' });
+        setSubmitStatus({ 
+          type: 'error', 
+          message: data.message || 'Failed to send inquiry. Please try again.' 
+        });
       }
     } catch (error) {
       console.error('Error submitting inquiry:', error);
-      setSubmitStatus({ type: 'error', message: 'Network error. Please try again.' });
+      setSubmitStatus({ 
+        type: 'error', 
+        message: 'Network error. Please check your connection and try again.' 
+      });
     } finally {
       setSubmitting(false);
     }
@@ -96,7 +109,7 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
           </div>
         </div>
 
-        <div className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Your Name *
@@ -167,11 +180,16 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
           </div>
 
           {submitStatus && (
-            <div className={`p-4 rounded-xl ${
+            <div className={`p-4 rounded-xl flex items-center gap-3 ${
               submitStatus.type === 'success' 
                 ? 'bg-green-50 text-green-800 border-2 border-green-200' 
                 : 'bg-red-50 text-red-800 border-2 border-red-200'
             }`}>
+              {submitStatus.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+              ) : (
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              )}
               <p className="font-bold text-sm">{submitStatus.message}</p>
             </div>
           )}
@@ -180,13 +198,13 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition-colors"
+              disabled={submitting}
+              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               disabled={submitting}
               className="flex-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
@@ -203,7 +221,7 @@ const InquiryModal = ({ show, onClose, propertyId, propertyTitle }) => {
               )}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   Calendar,
   BookOpen,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -41,7 +42,7 @@ const AgentAdmin = () => {
 
     { name: "Add Properties", icon: <Building2 size={18} />, path: "/agent/properties" },
     { name: "My Property", icon: <Building2 size={18} />, path: "/agent/properties/list" },
-    { name: "Leads & Inquiries", icon: <Users size={18} />, path: "/agent/leads" },
+    { name: "Inquiries", icon: <MessageSquare size={18} />, path: "/agent/inquiries" },
     { name: "Appointment", icon: <Calendar size={18} />, path: "/agent/appointment" },
     { name: "Bookings", icon: <BookOpen size={18} />, path: "/agent/bookings" },
     { name: "Report", icon: <FileText size={18} />, path: "/agent/report" },

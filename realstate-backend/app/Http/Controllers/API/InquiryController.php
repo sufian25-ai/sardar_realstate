@@ -16,11 +16,19 @@ class InquiryController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Inquiry::with(['property:id,title']);
+            $user = auth()->user();
+            $query = Inquiry::with(['property:pid,title,uid']);
+
+            // If user is agent, only show inquiries for their properties
+            if ($user && $user->utype === 'agent') {
+                $query->whereHas('property', function($q) use ($user) {
+                    $q->where('uid', $user->uid);
+                });
+            }
 
             $this->applyFilters($query, $request);
 
-            $inquiries = $query->paginate(10);
+            $inquiries = $query->latest()->paginate(50);
 
             return $this->successResponse('Inquiries fetched successfully', $inquiries);
         } catch (\Exception $e) {
@@ -30,25 +38,62 @@ class InquiryController extends Controller
     }
 
     /**
-     * Store a newly created resource.
+     * Store a newly created resource - PUBLIC ACCESS
      */
     public function store(Request $request)
     {
         try {
-            $validated = $this->validateInquiry($request);
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:20',
+                'property_id' => 'nullable|exists:properties,pid',
+                'message' => 'nullable|string',
+                'status' => 'in:new,reviewed,converted',
+            ]);
+
+            // Default status to 'new' if not provided
+            if (!isset($validated['status'])) {
+                $validated['status'] = 'new';
+            }
 
             $inquiry = Inquiry::create($validated);
 
-            return $this->successResponse(
-                'Inquiry created successfully',
-                $inquiry->load(['property:id,title']),
-                201
-            );
+            return response()->json([
+                'response_code' => 201,
+                'status' => 'success',
+                'message' => 'Inquiry created successfully',
+                'data' => $inquiry,
+            ], 201)->withHeaders([
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+            ]);
+
         } catch (ValidationException $e) {
-            return $this->validationErrorResponse($e);
+            return response()->json([
+                'response_code' => 422,
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422)->withHeaders([
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+            ]);
         } catch (\Exception $e) {
             Log::error('Inquiry Create Error: ' . $e->getMessage());
-            return $this->errorResponse('Failed to create inquiry', 500);
+
+            return response()->json([
+                'response_code' => 500,
+                'status' => 'error',
+                'message' => 'Failed to create inquiry',
+                'error' => $e->getMessage()
+            ], 500)->withHeaders([
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
+            ]);
         }
     }
 
@@ -74,7 +119,15 @@ class InquiryController extends Controller
     {
         try {
             $inquiry = Inquiry::findOrFail($id);
-            $validated = $this->validateInquiry($request, $id);
+
+            $validated = $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:20',
+                'property_id' => 'nullable|exists:properties,pid',
+                'message' => 'nullable|string',
+                'status' => 'in:new,reviewed,converted',
+            ]);
 
             $inquiry->update($validated);
 
@@ -110,22 +163,27 @@ class InquiryController extends Controller
 
     private function applyFilters($query, Request $request)
     {
-        if ($request->has('status') && !empty($request->status)) $query->where('status', $request->status);
-        if ($request->has('property_id') && !empty($request->property_id)) $query->where('property_id', $request->property_id);
-    }
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
 
-    private function validateInquiry(Request $request, $id = null)
-    {
-        $rules = [
-            'name' => ($id ? 'sometimes|required' : 'required') . '|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'property_id' => 'nullable|exists:properties,pid',
-            'message' => 'nullable|string',
-            'status' => 'in:new,reviewed,converted',
-        ];
+        if ($request->has('property_id') && !empty($request->property_id)) {
+            $query->where('property_id', $request->property_id);
+        }
 
-        return $request->validate($rules);
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('message', 'like', "%{$search}%")
+                  ->orWhereHas('property', function($propertyQuery) use ($search) {
+                      $propertyQuery->where('title', 'like', "%{$search}%");
+                  });
+            });
+        }
     }
 
     private function successResponse($message, $data = null, $code = 200)

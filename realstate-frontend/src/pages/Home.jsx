@@ -112,8 +112,8 @@ const HomePage = () => {
           const totalProperties = allPropertiesRes.data.data.total || 0;
           setStats(prev => [
             { ...prev[0], number: `${totalProperties}+` },
-            { ...prev[1], number: '2000+' },
-            { ...prev[2], number: '150+' },
+            { ...prev[1], number: '20+' },
+            { ...prev[2], number: '50+' },
             { ...prev[3], number: '50+' }
           ]);
         }
@@ -123,7 +123,7 @@ const HomePage = () => {
         // Set default/empty data on error
         setFeaturedProperties([]);
       } finally {
-        setTimeout(() => setIsLoading(false), 2000);
+        setTimeout(() => setIsLoading(false), 1000);
       }
     };
 
@@ -134,7 +134,7 @@ const HomePage = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 5000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -180,7 +180,7 @@ const HomePage = () => {
               />
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4 animate-pulse">Loading Your Dream Properties</h2>
+          <h2 className="text-3xl font-bold text-white mb-4 animate-pulse">Loading Sardar Realstste</h2>
           <div className="flex justify-center space-x-2">
             <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
             <div className="w-3 h-3 bg-white rounded-full animate-bounce delay-100"></div>
@@ -231,7 +231,7 @@ const HomePage = () => {
               {heroSlides[currentSlide].subtitle}
             </p>
             
-            <div className="flex flex-wrap gap-4">
+            {/* <div className="flex flex-wrap gap-4">
               <Link 
                 to="/properties" 
                 className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl font-semibold text-white shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 overflow-hidden"
@@ -246,7 +246,7 @@ const HomePage = () => {
               <button className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-2xl font-semibold text-white hover:bg-white/20 transition-all duration-300">
                 Watch Video
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
