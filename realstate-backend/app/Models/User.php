@@ -21,6 +21,16 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'phone',
+        'address',
+        'bio',
+        'avatar',
+        'date_of_birth',
+        'gender',
+        'occupation',
+        'annual_income',
+        'is_verified',
+        'last_login_at'
     ];
 
     /**
@@ -43,6 +53,10 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'date_of_birth' => 'date',
+            'annual_income' => 'decimal:2',
+            'is_verified' => 'boolean',
+            'last_login_at' => 'datetime'
         ];
     }
 
@@ -68,5 +82,29 @@ class User extends Authenticatable
     public function isUser(): bool
     {
         return $this->role === 'user';
+    }
+
+    /**
+     * Get user's orders
+     */
+    public function orders()
+    {
+        return $this->hasMany(UserOrder::class);
+    }
+
+    /**
+     * Get user's properties
+     */
+    public function userProperties()
+    {
+        return $this->hasMany(UserProperty::class);
+    }
+
+    /**
+     * Get user's inquiries
+     */
+    public function inquiries()
+    {
+        return $this->hasMany(Inquiry::class);
     }
 }

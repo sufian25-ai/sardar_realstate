@@ -1,7 +1,7 @@
 // src/pages/PropertyDetails.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Bed, Bath, Square, Star, ArrowLeft, Phone, Mail, Calendar, User, MessageSquare, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Star, ArrowLeft, Phone, Mail, Calendar, User, MessageSquare, Send, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 
@@ -449,6 +449,17 @@ const PropertyDetails = () => {
                       <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all">
                         <Calendar className="w-5 h-5" />
                         Book Property
+                      </button>
+                    )}
+                    
+                    {/* Payment Button */}
+                    {property.status === 'available' && (
+                      <button 
+                        onClick={() => navigate(`/payment/${property.pid}`)}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all"
+                      >
+                        <CreditCard className="w-5 h-5" />
+                        Make Payment
                       </button>
                     )}
                     

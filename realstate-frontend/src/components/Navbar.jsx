@@ -214,6 +214,15 @@ const Navbar = () => {
                 <Building2 size={18} />
                 <span className="font-medium">Properties</span>
               </Link>
+
+               <Link 
+                to="/properties" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all"
+              >
+                <Building2 size={18} />
+                <span className="font-medium">About</span>
+              </Link>
             </div>
           </div>
         )}

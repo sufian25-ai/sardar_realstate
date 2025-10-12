@@ -28,6 +28,7 @@ import AgentUsers from './pages/agent/AgentUsers';
 import AgentInquiries from './pages/agent/AgentInquiries';
 //User Pages
 import UserProfile from './pages/user/UserProfile';
+import PaymentForm from './pages/PaymentForm';
 
 
 import './App.css';
@@ -81,6 +82,9 @@ function App() {
 
           {/* User Pages */}
           <Route path="/user/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+
+          {/* Payment */}
+          <Route path="/payment/:propertyId" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />
 
           {/* Properties */}
           <Route path="/properties" element={<Properties />} />

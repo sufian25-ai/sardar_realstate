@@ -63,4 +63,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('inquiries/{id}', [InquiryController::class, 'show'])->name('api.inquiries.show');
     Route::put('inquiries/{id}', [InquiryController::class, 'update'])->name('api.inquiries.update');
     Route::delete('inquiries/{id}', [InquiryController::class, 'destroy'])->name('api.inquiries.destroy');
+
+    // User Profile Management
+    Route::get('profile', [App\Http\Controllers\API\UserProfileController::class, 'index'])->name('api.profile.index');
+    Route::put('profile', [App\Http\Controllers\API\UserProfileController::class, 'update'])->name('api.profile.update');
+    Route::get('profile/orders', [App\Http\Controllers\API\UserProfileController::class, 'orders'])->name('api.profile.orders');
+    Route::get('profile/properties', [App\Http\Controllers\API\UserProfileController::class, 'properties'])->name('api.profile.properties');
+    Route::post('profile/orders', [App\Http\Controllers\API\UserProfileController::class, 'createOrder'])->name('api.profile.orders.create');
+    Route::post('profile/properties', [App\Http\Controllers\API\UserProfileController::class, 'addProperty'])->name('api.profile.properties.add');
+
+    // Property Payment Management
+    Route::get('properties/{propertyId}/payment-details', [App\Http\Controllers\API\PaymentController::class, 'getPropertyPaymentDetails'])->name('api.properties.payment-details');
+    Route::post('properties/{propertyId}/payment', [App\Http\Controllers\API\PaymentController::class, 'processPropertyPayment'])->name('api.properties.payment');
+    
+    // Payment Management
+    Route::apiResource('payments', App\Http\Controllers\API\PaymentController::class);
+    Route::post('payments/{id}/approve', [App\Http\Controllers\API\PaymentController::class, 'approve'])->name('api.payments.approve');
 });

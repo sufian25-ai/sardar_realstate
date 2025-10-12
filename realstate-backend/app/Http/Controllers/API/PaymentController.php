@@ -4,8 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\RentPayment;
 use App\Models\Property;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -236,6 +238,131 @@ class PaymentController extends Controller
     }
 
     /**
+     * Get property payment details for payment form
+     */
+    public function getPropertyPaymentDetails($propertyId)
+    {
+        try {
+            $property = Property::findOrFail($propertyId);
+            
+            $paymentDetails = [
+                'property' => [
+                    'pid' => $property->pid,
+                    'title' => $property->title,
+                    'price' => $property->price,
+                    'stype' => $property->stype,
+                    'location' => $property->location,
+                    'pimage' => $property->pimage
+                ],
+                'payment_type' => $property->stype === 'sale' ? 'purchase' : 'rent',
+                'table_name' => $property->stype === 'sale' ? 'payments' : 'rent_payments'
+            ];
+
+            return $this->successResponse('Property payment details fetched successfully', $paymentDetails);
+        } catch (\Exception $e) {
+            Log::error('Property Payment Details Error: ' . $e->getMessage());
+            return $this->errorResponse('Failed to fetch property payment details', 500);
+        }
+    }
+
+    /**
+     * Process property payment based on stype
+     */
+    public function processPropertyPayment(Request $request, $propertyId)
+    {
+        try {
+            $property = Property::findOrFail($propertyId);
+            $user = Auth::user();
+
+            if (!$user) {
+                return $this->errorResponse('User not authenticated', 401);
+            }
+
+            // Validate common fields
+            $validated = $request->validate([
+                'amount' => 'required|numeric|min:0.01',
+                'payment_method' => 'required|in:card,bank_transfer,cash,online,bkash,nagad,rocket',
+                'transaction_id' => 'nullable|string|max:255',
+                'payment_notes' => 'nullable|string'
+            ]);
+
+            if ($property->stype === 'sale') {
+                return $this->processSalePayment($property, $user, $validated);
+            } else {
+                return $this->processRentPayment($property, $user, $validated, $request);
+            }
+
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', 422, $e->errors());
+        } catch (\Exception $e) {
+            Log::error('Property Payment Process Error: ' . $e->getMessage());
+            return $this->errorResponse('Failed to process payment', 500);
+        }
+    }
+
+    /**
+     * Process sale payment (goes to payments table)
+     */
+    private function processSalePayment($property, $user, $validated)
+    {
+        $paymentData = [
+            'property_id' => $property->pid,
+            'user_id' => $user->id,
+            'amount_paid' => $validated['amount'],
+            'property_price' => $property->price,
+            'remaining_amount' => max(0, $property->price - $validated['amount']),
+            'installment_amount' => $validated['amount'],
+            'amount_with_interest' => $validated['amount'], // Can be calculated with interest later
+            'transaction_id' => $validated['transaction_id'] ?? 'TXN_' . time() . '_' . rand(1000, 9999),
+            'payment_method' => $validated['payment_method'],
+            'payment_details' => $validated['payment_notes'] ?? null,
+            'status' => 'pending',
+            'payment_date' => now()
+        ];
+
+        $payment = Payment::create($paymentData);
+        $payment->load('property:pid,title,price,location');
+
+        return $this->successResponse('Sale payment processed successfully', $payment, 201);
+    }
+
+    /**
+     * Process rent payment (goes to rent_payments table)
+     */
+    private function processRentPayment($property, $user, $validated, $request)
+    {
+        // Additional validation for rent payments
+        $rentValidated = $request->validate([
+            'rent_id' => 'nullable|exists:rents,rid',
+            'installment_number' => 'required|integer|min:1',
+            'due_date' => 'required|date',
+            'payment_type' => 'required|in:down_payment,installment,final_payment'
+        ]);
+
+        $paymentData = [
+            'rent_id' => $rentValidated['rent_id'],
+            'property_id' => $property->pid,
+            'user_id' => $user->id,
+            'amount_paid' => $validated['amount'],
+            'cumulative_amount' => $validated['amount'], // Should be calculated based on previous payments
+            'due_amount' => max(0, $property->price - $validated['amount']),
+            'transaction_id' => $validated['transaction_id'] ?? 'RENT_' . time() . '_' . rand(1000, 9999),
+            'payment_method' => $validated['payment_method'],
+            'payment_notes' => $validated['payment_notes'] ?? null,
+            'installment_number' => $rentValidated['installment_number'],
+            'due_date' => $rentValidated['due_date'],
+            'payment_date' => now(),
+            'status' => 'pending',
+            'type' => $rentValidated['payment_type']
+        ];
+
+        $payment = RentPayment::create($paymentData);
+        $payment->load('property:pid,title,price,location');
+
+        return $this->successResponse('Rent payment processed successfully', $payment, 201);
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Request $request, string $id)
@@ -277,5 +404,31 @@ class PaymentController extends Controller
                 'message' => 'Failed to delete payment',
             ], 500);
         }
+    }
+
+    // Helper methods
+    private function successResponse($message, $data = null, $code = 200)
+    {
+        return response()->json([
+            'response_code' => $code,
+            'status' => 'success',
+            'message' => $message,
+            'data' => $data,
+        ], $code);
+    }
+
+    private function errorResponse($message, $code = 500, $errors = null)
+    {
+        $response = [
+            'response_code' => $code,
+            'status' => 'error',
+            'message' => $message,
+        ];
+
+        if ($errors) {
+            $response['errors'] = $errors;
+        }
+
+        return response()->json($response, $code);
     }
 }
