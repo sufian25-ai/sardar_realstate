@@ -18,6 +18,28 @@ const UserProfile = () => {
     }
   }, [authUser]);
 
+  // Refresh data when component mounts or when returning from payment
+  useEffect(() => {
+    const refreshData = () => {
+      if (authUser) {
+        fetchUserData();
+        fetchOrdersWithPaymentDetails();
+      }
+    };
+
+    // Listen for storage events (when payment is completed)
+    window.addEventListener('storage', refreshData);
+    
+    // Listen for focus events (when user returns to tab)
+    window.addEventListener('focus', refreshData);
+
+    return () => {
+      window.removeEventListener('storage', refreshData);
+      window.removeEventListener('focus', refreshData);
+    };
+  }, [authUser]);
+
+
   const fetchUserData = async () => {
     try {
       setLoading(true);
@@ -29,9 +51,12 @@ const UserProfile = () => {
         const { user: userData, stats: userStats } = profileResponse.data.data;
         setUser(userData);
         setStats(userStats);
-        setOrders(userData.orders || []);
         setProperties(userData.user_properties || []);
       }
+
+      // Fetch orders with payment details separately
+      await fetchOrdersWithPaymentDetails();
+      
     } catch (error) {
       console.error('Error fetching user data:', error);
       // Fallback to auth user data
@@ -47,14 +72,18 @@ const UserProfile = () => {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrdersWithPaymentDetails = async () => {
     try {
-      const response = await api.get('/profile/orders');
-      if (response.data.status === 'success') {
-        setOrders(response.data.data.data || []);
+      const ordersResponse = await api.get('/profile/orders');
+      
+      if (ordersResponse.data.status === 'success') {
+        const ordersData = ordersResponse.data.data.data || [];
+        console.log('Orders data received:', ordersData);
+        setOrders(ordersData);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setOrders([]);
     }
   };
 
@@ -66,6 +95,21 @@ const UserProfile = () => {
       }
     } catch (error) {
       console.error('Error fetching properties:', error);
+    }
+  };
+
+  // Handle tab change and refresh data if needed
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    
+    // Refresh orders when switching to orders tab
+    if (tabId === 'orders') {
+      fetchOrdersWithPaymentDetails();
+    }
+    
+    // Refresh properties when switching to properties tab
+    if (tabId === 'properties') {
+      fetchProperties();
     }
   };
 
@@ -140,10 +184,24 @@ const UserProfile = () => {
               </div>
             </div>
 
-            {/* Edit Profile Button */}
-            <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300">
-              Edit Profile
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  fetchUserData();
+                  fetchOrdersWithPaymentDetails();
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
+              >
+                🔄 Refresh
+              </button>
+              <Link 
+                to="/user/profile/edit"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 inline-block"
+              >
+                Edit Profile
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -157,7 +215,7 @@ const UserProfile = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 border border-blue-200'
@@ -253,7 +311,7 @@ const UserProfile = () => {
                 <div className="space-y-6">
                   {orders.map((order) => (
                     <div key={order.id} className="border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow duration-300">
-                      <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6">
+                      <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-6">
                         <img 
                           src={order.property?.pimage ? `http://localhost:8000/${order.property.pimage}` : '/assets/placeholder.jpg'} 
                           alt={order.property?.title || 'Property'}
@@ -265,27 +323,100 @@ const UserProfile = () => {
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             {order.property?.title || 'Property Not Available'}
                           </h3>
-                          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
                             <span>Order Date: {new Date(order.created_at).toLocaleDateString()}</span>
                             <span>Amount: ${order.amount?.toLocaleString()}</span>
                             <span>Type: {order.order_type?.charAt(0).toUpperCase() + order.order_type?.slice(1)}</span>
                           </div>
+                          
+                          {/* Payment Details */}
+                          {order.payment_details && (
+                            <div className="bg-gray-50 rounded-lg p-4 mt-3">
+                              <h4 className="font-medium text-gray-900 mb-2">Payment Status</h4>
+                              
+                              {order.payment_details.payment_type === 'sale' ? (
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Total Price:</span>
+                                    <span className="font-medium">${order.payment_details.total_property_price?.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Total Paid:</span>
+                                    <span className="font-medium text-green-600">${order.payment_details.total_paid?.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Remaining:</span>
+                                    <span className="font-medium text-orange-600">${order.payment_details.remaining_amount?.toLocaleString()}</span>
+                                  </div>
+                                  
+                                  {/* Progress Bar */}
+                                  <div className="mt-3">
+                                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                                      <span>Payment Progress</span>
+                                      <span>{order.payment_details.payment_progress?.toFixed(1)}%</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                      <div 
+                                        className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
+                                        style={{ width: `${Math.min(100, order.payment_details.payment_progress || 0)}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                    <span>Payments: {order.payment_details.approved_payments}/{order.payment_details.payment_count}</span>
+                                    <span className={order.payment_details.is_fully_paid ? 'text-green-600 font-medium' : 'text-orange-600'}>
+                                      {order.payment_details.is_fully_paid ? 'Fully Paid' : 'Partial Payment'}
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Total Paid:</span>
+                                    <span className="font-medium text-green-600">${order.payment_details.total_paid?.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Pending:</span>
+                                    <span className="font-medium text-orange-600">${order.payment_details.pending_amount?.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between text-xs text-gray-500 mt-2">
+                                    <span>Paid: {order.payment_details.paid_installments}</span>
+                                    <span>Pending: {order.payment_details.pending_installments}</span>
+                                    <span>Overdue: {order.payment_details.overdue_installments}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
                           {order.notes && (
                             <p className="text-sm text-gray-500 mt-2">{order.notes}</p>
                           )}
                         </div>
                         
-                        <div className="flex items-center space-x-4">
+                        <div className="flex flex-col items-end space-y-2">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
                             {getStatusText(order.status)}
                           </span>
                           
-                          <Link 
-                            to={`/properties/${order.property?.pid}`}
-                            className="text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            View Property
-                          </Link>
+                          <div className="flex flex-col space-y-1">
+                            <Link 
+                              to={`/properties/${order.property?.pid}`}
+                              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                            >
+                              View Property
+                            </Link>
+                            
+                            {order.payment_details && !order.payment_details.is_fully_paid && (
+                              <Link 
+                                to={`/payment/${order.property?.pid}`}
+                                className="text-green-600 hover:text-green-700 font-medium text-sm"
+                              >
+                                Make Payment
+                              </Link>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

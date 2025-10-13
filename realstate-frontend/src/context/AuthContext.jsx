@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      api.get('/get-user')
+      api.get('/me')
         .then(response => {
           setUser(response.data.user);
         })
@@ -47,6 +47,29 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   };
 
+  // Update user
+  const updateUser = (userData) => {
+    setUser(userData);
+  };
+
+  // Refresh user data
+  const refreshUser = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const response = await api.get('/me');
+        setUser(response.data.user);
+        return response.data.user;
+      } catch (error) {
+        console.error('Failed to refresh user:', error);
+        localStorage.removeItem('token');
+        setUser(null);
+        return null;
+      }
+    }
+    return null;
+  };
+
   // Logout user
   const logout = async () => {
     try {
@@ -61,7 +84,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateUser, refreshUser, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );

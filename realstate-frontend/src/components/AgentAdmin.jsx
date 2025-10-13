@@ -14,6 +14,7 @@ import {
   BookOpen,
   FileText,
   MessageSquare,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -43,6 +44,7 @@ const AgentAdmin = () => {
     { name: "Add Properties", icon: <Building2 size={18} />, path: "/agent/properties" },
     { name: "My Property", icon: <Building2 size={18} />, path: "/agent/properties/list" },
     { name: "Inquiries", icon: <MessageSquare size={18} />, path: "/agent/inquiries" },
+    { name: "Payment Management", icon: <CreditCard size={18} />, path: "/agent/payments" },
     { name: "Appointment", icon: <Calendar size={18} />, path: "/agent/appointment" },
     { name: "Bookings", icon: <BookOpen size={18} />, path: "/agent/bookings" },
     { name: "Report", icon: <FileText size={18} />, path: "/agent/report" },

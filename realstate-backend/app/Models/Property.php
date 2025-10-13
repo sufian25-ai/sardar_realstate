@@ -87,7 +87,7 @@ class Property extends Model
 
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'pid');
+        return $this->hasMany(Payment::class, 'property_id', 'pid');
     }
 
     // Scopes for easier queries

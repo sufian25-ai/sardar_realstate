@@ -26,8 +26,14 @@ import AgentAdmin from './components/AgentAdmin';
 import AgentDashboard from './pages/agent/AgentDashboard';
 import AgentUsers from './pages/agent/AgentUsers';
 import AgentInquiries from './pages/agent/AgentInquiries';
+import CityManagements from './pages/agent/CityManagement';
+import StateManagements from './pages/agent/StateManagement';
+import CreatePropertyWithUploads from './pages/admin/CreatePropertyWithUpload';
+import PropertyLists from './pages/agent/PropertyList';
+import PaymentManagement from './pages/agent/PaymentManagement';
 //User Pages
 import UserProfile from './pages/user/UserProfile';
+import UserProfileEdit from './pages/user/UserProfileEdit';
 import PaymentForm from './pages/PaymentForm';
 
 
@@ -77,11 +83,17 @@ function App() {
             <Route path="dashboard" element={<AgentDashboard />} />
             <Route path="users" element={<AgentUsers />} />
             <Route path="inquiries" element={<AgentInquiries />} />
+            <Route path="states" element={<StateManagements />} />
+            <Route path="cities" element={<CityManagements />} />
+            <Route path="properties" element={<CreatePropertyWithUploads />} />
+            <Route path="properties/list" element={<PropertyLists />} />
+            <Route path="payments" element={<PaymentManagement />} />
           </Route>
 
 
           {/* User Pages */}
           <Route path="/user/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+          <Route path="/user/profile/edit" element={<ProtectedRoute><UserProfileEdit /></ProtectedRoute>} />
 
           {/* Payment */}
           <Route path="/payment/:propertyId" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />

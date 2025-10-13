@@ -80,9 +80,30 @@ const PaymentForm = () => {
       const response = await api.post(`/properties/${propertyId}/payment`, paymentForm);
 
       if (response.data.status === 'success') {
+        const paymentData = response.data.data;
+        
+        let successMessage = `${property.payment_type === 'purchase' ? 'Purchase' : 'Rent'} payment submitted successfully!`;
+        
+        // Add payment summary for sale properties
+        if (paymentData.payment_summary) {
+          const summary = paymentData.payment_summary;
+          successMessage += `\n\nPayment Summary:`;
+          successMessage += `\n• Current Payment: $${summary.current_payment?.toLocaleString()}`;
+          successMessage += `\n• Total Paid: $${summary.total_paid_now?.toLocaleString()}`;
+          successMessage += `\n• Remaining: $${summary.remaining_amount?.toLocaleString()}`;
+          successMessage += `\n• Progress: ${summary.payment_progress?.toFixed(1)}%`;
+          
+          if (summary.is_fully_paid) {
+            successMessage += `\n\n🎉 Property is now fully paid!`;
+          }
+        }
+        
+        successMessage += `\n\nTransaction ID: ${paymentData.payment?.transaction_id || paymentData.transaction_id}`;
+        
         setSubmitStatus({ 
           type: 'success', 
-          message: `${property.payment_type === 'purchase' ? 'Purchase' : 'Rent'} payment submitted successfully! Transaction ID: ${response.data.data.transaction_id}` 
+          message: successMessage,
+          paymentSummary: paymentData.payment_summary
         });
         
         // Reset form
@@ -96,6 +117,10 @@ const PaymentForm = () => {
           due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           payment_type: 'installment'
         });
+
+        // Trigger storage event to refresh other components
+        localStorage.setItem('payment_updated', Date.now().toString());
+        window.dispatchEvent(new Event('storage'));
 
         // Redirect to profile after 3 seconds
         setTimeout(() => {
@@ -209,17 +234,80 @@ const PaymentForm = () => {
             <h2 className="text-xl font-bold text-gray-900 mb-6">Payment Details</h2>
 
             {submitStatus && (
-              <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+              <div className={`mb-6 p-4 rounded-lg ${
                 submitStatus.type === 'success' 
-                  ? 'bg-green-50 border border-green-200 text-green-800' 
-                  : 'bg-red-50 border border-red-200 text-red-800'
+                  ? 'bg-green-50 border border-green-200' 
+                  : 'bg-red-50 border border-red-200'
               }`}>
-                {submitStatus.type === 'success' ? (
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                )}
-                <span className="text-sm">{submitStatus.message}</span>
+                <div className="flex items-start gap-3">
+                  {submitStatus.type === 'success' ? (
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <div className={`text-sm ${submitStatus.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>
+                      {submitStatus.message.split('\n').map((line, index) => (
+                        <div key={index} className={index > 0 ? 'mt-1' : ''}>
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Payment Summary Display */}
+                    {submitStatus.paymentSummary && (
+                      <div className="mt-4 p-3 bg-white rounded-lg border border-green-200">
+                        <h4 className="font-medium text-green-900 mb-2">Payment Summary</h4>
+                        <div className="space-y-1 text-sm text-green-800">
+                          <div className="flex justify-between">
+                            <span>Property Price:</span>
+                            <span className="font-medium">${submitStatus.paymentSummary.total_property_price?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Current Payment:</span>
+                            <span className="font-medium text-blue-600">${submitStatus.paymentSummary.current_payment?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Total Paid:</span>
+                            <span className="font-medium text-green-600">${submitStatus.paymentSummary.total_paid_now?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Remaining:</span>
+                            <span className={`font-medium ${submitStatus.paymentSummary.remaining_amount > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                              ${submitStatus.paymentSummary.remaining_amount?.toLocaleString()}
+                            </span>
+                          </div>
+                          
+                          {/* Progress Bar */}
+                          <div className="mt-3">
+                            <div className="flex justify-between text-xs text-gray-600 mb-1">
+                              <span>Payment Progress</span>
+                              <span>{submitStatus.paymentSummary.payment_progress?.toFixed(1)}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${Math.min(100, submitStatus.paymentSummary.payment_progress || 0)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                          
+                          {submitStatus.paymentSummary.is_fully_paid && (
+                            <div className="mt-3 p-2 bg-green-100 rounded-lg text-center">
+                              <span className="text-green-800 font-medium">🎉 Property Fully Paid!</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {submitStatus.type === 'success' && (
+                      <div className="mt-3 text-xs text-green-600">
+                        Redirecting to your profile in 5 seconds...
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -269,15 +357,16 @@ const PaymentForm = () => {
               {/* Transaction ID */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Transaction ID (Optional)
+                  Transaction ID <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="transaction_id"
                   value={paymentForm.transaction_id}
                   onChange={handleInputChange}
+                  required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter transaction ID if available"
+                  placeholder="Enter your payment transaction ID"
                 />
               </div>
 

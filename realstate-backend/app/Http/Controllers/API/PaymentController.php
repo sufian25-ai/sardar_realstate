@@ -171,7 +171,7 @@ class PaymentController extends Controller
                 'amount' => 'sometimes|required|numeric|min:0.01',
                 'payment_method' => 'sometimes|required|in:card,bank_transfer,cash,online',
                 'transaction_id' => 'nullable|string|max:255',
-                'status' => 'sometimes|required|in:pending,approved,failed',
+                'status' => 'sometimes|required|in:pending,processing,completed,cancelled',
                 'notes' => 'nullable|string',
             ]);
 
@@ -282,8 +282,15 @@ class PaymentController extends Controller
             $validated = $request->validate([
                 'amount' => 'required|numeric|min:0.01',
                 'payment_method' => 'required|in:card,bank_transfer,cash,online,bkash,nagad,rocket',
-                'transaction_id' => 'nullable|string|max:255',
+                'transaction_id' => 'required|string|max:255',
                 'payment_notes' => 'nullable|string'
+            ]);
+
+            Log::info('Payment validation passed', [
+                'property_id' => $propertyId,
+                'user_id' => $user->id,
+                'amount' => $validated['amount'],
+                'payment_method' => $validated['payment_method']
             ]);
 
             if ($property->stype === 'sale') {
@@ -295,8 +302,13 @@ class PaymentController extends Controller
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            Log::error('Property Payment Process Error: ' . $e->getMessage());
-            return $this->errorResponse('Failed to process payment', 500);
+            Log::error('Property Payment Process Error', [
+                'property_id' => $propertyId,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return $this->errorResponse('Failed to process payment: ' . $e->getMessage(), 500);
         }
     }
 
@@ -305,14 +317,25 @@ class PaymentController extends Controller
      */
     private function processSalePayment($property, $user, $validated)
     {
+        // Calculate total paid amount for this property by this user
+        $totalPaidBefore = Payment::where('property_id', $property->pid)
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->sum('amount_paid');
+
+        $newTotalPaid = $totalPaidBefore + $validated['amount'];
+        $remainingAmount = max(0, $property->price - $newTotalPaid);
+
         $paymentData = [
             'property_id' => $property->pid,
             'user_id' => $user->id,
             'amount_paid' => $validated['amount'],
+            'remaining_amount' => $remainingAmount,
             'property_price' => $property->price,
-            'remaining_amount' => max(0, $property->price - $validated['amount']),
             'installment_amount' => $validated['amount'],
+            'interest_rate' => '0%',
             'amount_with_interest' => $validated['amount'], // Can be calculated with interest later
+            'discount' => 0,
             'transaction_id' => $validated['transaction_id'] ?? 'TXN_' . time() . '_' . rand(1000, 9999),
             'payment_method' => $validated['payment_method'],
             'payment_details' => $validated['payment_notes'] ?? null,
@@ -323,7 +346,21 @@ class PaymentController extends Controller
         $payment = Payment::create($paymentData);
         $payment->load('property:pid,title,price,location');
 
-        return $this->successResponse('Sale payment processed successfully', $payment, 201);
+        // Add payment summary to response
+        $paymentSummary = [
+            'payment' => $payment,
+            'payment_summary' => [
+                'total_property_price' => $property->price,
+                'total_paid_before' => $totalPaidBefore,
+                'current_payment' => $validated['amount'],
+                'total_paid_now' => $newTotalPaid,
+                'remaining_amount' => $remainingAmount,
+                'payment_progress' => $property->price > 0 ? ($newTotalPaid / $property->price) * 100 : 0,
+                'is_fully_paid' => $remainingAmount <= 0
+            ]
+        ];
+
+        return $this->successResponse('Sale payment processed successfully', $paymentSummary, 201);
     }
 
     /**
@@ -379,12 +416,12 @@ class PaymentController extends Controller
                 ], 403);
             }
 
-            // Cannot delete approved payments
-            if ($payment->status === 'approved') {
+            // Cannot delete completed payments
+            if ($payment->status === 'completed') {
                 return response()->json([
                     'response_code' => 400,
                     'status' => 'error',
-                    'message' => 'Cannot delete approved payment',
+                    'message' => 'Cannot delete completed payment',
                 ], 400);
             }
 

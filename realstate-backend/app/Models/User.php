@@ -85,19 +85,21 @@ class User extends Authenticatable
     }
 
     /**
-     * Get user's orders
+     * Get user's payments
      */
-    public function orders()
+    public function payments()
     {
-        return $this->hasMany(UserOrder::class);
+        return $this->hasMany(Payment::class);
     }
 
     /**
-     * Get user's properties
+     * Get user's properties (through completed payments)
      */
-    public function userProperties()
+    public function ownedProperties()
     {
-        return $this->hasMany(UserProperty::class);
+        return $this->belongsToMany(Property::class, 'payments', 'user_id', 'property_id')
+                    ->wherePivot('status', 'completed')
+                    ->withPivot('amount_paid', 'payment_date', 'transaction_id');
     }
 
     /**

@@ -4,6 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthenticationController;
 use App\Http\Controllers\API\InquiryController;
+use App\Http\Controllers\API\AgentPaymentController;
+use App\Http\Controllers\API\AgentController;
+use App\Http\Controllers\API\DebugController;
 
 // Public routes (no authentication required)
 Route::post('register', [AuthenticationController::class, 'register'])->name('api.register');
@@ -28,6 +31,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('me', [AuthenticationController::class, 'me'])->name('api.me');
     Route::get('get-user', [AuthenticationController::class, 'userInfo'])->name('api.get-user');
     Route::post('logout', [AuthenticationController::class, 'logOut'])->name('api.logout');
+
+    // Agent Routes
+    Route::middleware(['auth:sanctum'])->prefix('agent')->group(function () {
+        Route::get('/dashboard', [AgentController::class, 'dashboard']);
+        Route::get('/users', [AgentController::class, 'getUsers']);
+        Route::get('/inquiries', [AgentController::class, 'getInquiries']);
+        Route::put('/inquiries/{id}/status', [AgentController::class, 'updateInquiryStatus']);
+        
+        // Payment Management Routes
+        Route::get('/payments', [AgentPaymentController::class, 'index']);
+        Route::put('/payments/{id}/status', [AgentPaymentController::class, 'updateStatus']);
+        Route::get('/payments/statistics', [AgentPaymentController::class, 'statistics']);
+        Route::get('/payments/{id}/details', [AgentPaymentController::class, 'paymentDetails']);
+        Route::get('/users/{id}/payments', [AgentPaymentController::class, 'userPaymentSummary']);
+    });
 
     // States
     Route::apiResource('states', App\Http\Controllers\API\StateController::class);
@@ -79,4 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Payment Management
     Route::apiResource('payments', App\Http\Controllers\API\PaymentController::class);
     Route::post('payments/{id}/approve', [App\Http\Controllers\API\PaymentController::class, 'approve'])->name('api.payments.approve');
+    
+    // Debug routes
+    Route::get('debug/payment-progress', [DebugController::class, 'testPaymentProgress']);
 });
