@@ -49,17 +49,64 @@ const PaymentManagement = () => {
       console.log('Update response:', response.data);
 
       if (response.data.status === 'success') {
-        // Update local state
-        setPayments(payments.map(payment => 
-          payment.id === paymentId 
-            ? { ...payment, status: newStatus, admin_notes: notes, updated_at: new Date().toISOString() }
-            : payment
-        ));
+        // Update local state with recalculated progress
+        setPayments(payments.map(payment => {
+          if (payment.id === paymentId) {
+            const updatedPayment = { 
+              ...payment, 
+              status: newStatus, 
+              admin_notes: notes, 
+              updated_at: new Date().toISOString() 
+            };
+            
+            // Recalculate progress for this property
+            const propertyPayments = payments.filter(p => 
+              p.property_id === payment.property_id && 
+              p.user_id === payment.user_id
+            );
+            
+            // Update the status of current payment in the array for calculation
+            const updatedPropertyPayments = propertyPayments.map(p => 
+              p.id === paymentId ? { ...p, status: newStatus } : p
+            );
+            
+            const totalPaid = updatedPropertyPayments
+              .filter(p => p.status === 'completed')
+              .reduce((sum, p) => sum + parseFloat(p.amount_paid || 0), 0);
+            
+            const propertyPrice = parseFloat(payment.property?.price || 0);
+            const remainingAmount = Math.max(0, propertyPrice - totalPaid);
+            const paymentProgress = propertyPrice > 0 ? (totalPaid / propertyPrice) * 100 : 0;
+            
+            console.log('Updated payment progress:', {
+              paymentId,
+              newStatus,
+              totalPaid,
+              remainingAmount,
+              paymentProgress: paymentProgress.toFixed(1) + '%'
+            });
+            
+            return updatedPayment;
+          }
+          return payment;
+        }));
+        
         setShowModal(false);
         setSelectedPayment(null);
         
-        // Show success message
-        alert('Payment status updated successfully!');
+        // Show success message with progress info
+        const updatedPayment = payments.find(p => p.id === paymentId);
+        const stats = calculatePropertyStats(updatedPayment);
+        
+        let successMessage = 'Payment status updated successfully!';
+        if (stats && newStatus === 'completed') {
+          successMessage += `\n\nProperty Progress: ${stats.paymentProgress.toFixed(1)}%`;
+          if (stats.isFullyPaid) {
+            successMessage += '\n🎉 Property is now fully paid!';
+          }
+        }
+        
+        alert(successMessage);
       } else {
         throw new Error(response.data.message || 'Unknown error occurred');
       }
@@ -396,11 +443,22 @@ const PaymentManagement = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     defaultValue={selectedPayment.status}
                   >
-                    <option value="pending">অপেক্ষমান</option>
-                    <option value="processing">প্রক্রিয়াধীন</option>
-                    <option value="completed">সম্পূর্ণ</option>
-                    <option value="cancelled">বাতিল</option>
+                    <option value="pending">Pending - User submitted payment</option>
+                    <option value="processing">Processing - Agent verified payment</option>
+                    <option value="completed">Completed - Payment approved</option>
+                    <option value="cancelled">Cancelled - Payment rejected</option>
                   </select>
+                  
+                  {/* Payment Workflow Guidelines */}
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">💡 Payment Workflow:</h4>
+                    <div className="text-sm text-blue-700 space-y-1">
+                      <div>• <strong>Pending:</strong> User submitted payment, verify transaction</div>
+                      <div>• <strong>Processing:</strong> Payment verified, processing approval</div>
+                      <div>• <strong>Completed:</strong> Payment approved, property ownership updated</div>
+                      <div>• <strong>Cancelled:</strong> Payment rejected or invalid</div>
+                    </div>
+                  </div>
                 </div>
 
                 <div>

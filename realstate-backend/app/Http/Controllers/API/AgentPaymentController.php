@@ -109,7 +109,10 @@ class AgentPaymentController extends Controller
                 $updateData['admin_notes'] = $validated['admin_notes'];
             }
 
-            // Remove approved_at field as it doesn't exist in table
+            // Check if this is a completion and handle property ownership
+            if ($validated['status'] === 'completed') {
+                $this->handlePropertyCompletion($payment, $user);
+            }
 
             $updated = $payment->update($updateData);
 
@@ -309,6 +312,42 @@ class AgentPaymentController extends Controller
         } catch (\Exception $e) {
             Log::error('User Payment Summary Error: ' . $e->getMessage());
             return $this->errorResponse('Failed to fetch user payment summary', 500);
+        }
+    }
+
+    /**
+     * Handle property completion when payment is marked as completed
+     */
+    private function handlePropertyCompletion($payment, $approver)
+    {
+        try {
+            // Check if this property is fully paid
+            $totalPaid = Payment::where('property_id', $payment->property_id)
+                ->where('user_id', $payment->user_id)
+                ->where('status', 'completed')
+                ->sum('amount_paid');
+
+            $property = $payment->property;
+            
+            if ($property && $totalPaid >= $property->price) {
+                // Property is fully paid - transfer ownership
+                Log::info('Property fully paid, transferring ownership', [
+                    'property_id' => $property->pid,
+                    'user_id' => $payment->user_id,
+                    'total_paid' => $totalPaid,
+                    'property_price' => $property->price
+                ]);
+
+                // You can add property ownership transfer logic here
+                // For example, create a UserProperty record or update property status
+                
+                return true;
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Property completion handling error: ' . $e->getMessage());
+            return false;
         }
     }
 

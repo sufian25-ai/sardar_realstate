@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
-import { Search, MapPin, Bed, Bath, Square, Star, Filter } from 'lucide-react';
+import { Search, Filter, X, SlidersHorizontal } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import PropertyCard from '../components/PropertyCard';
+import Footer from '../components/Footer';
 
 const Properties = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
   
   const navigate = useNavigate();
 
@@ -24,18 +28,37 @@ const Properties = () => {
 
   useEffect(() => {
     fetchProperties();
+    fetchStatesAndCities();
   }, []);
 
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/properties', { params: {featured: true, status: 'available'} });
+      const response = await api.get('/properties', { 
+        params: { featured: true, status: 'available' } 
+      });
       setProperties(response.data.data.data || []);
     } catch (err) {
       console.error('Error fetching properties:', err);
       setProperties([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStatesAndCities = async () => {
+    try {
+      const statesRes = await api.get('/states', { params: { active: true } });
+      if (statesRes.data.status === 'success') {
+        setStates(statesRes.data.data.data);
+      }
+
+      const citiesRes = await api.get('/cities', { params: { active: true } });
+      if (citiesRes.data.status === 'success') {
+        setCities(citiesRes.data.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching states/cities:', error);
     }
   };
 
@@ -85,54 +108,83 @@ const Properties = () => {
         <div className="container mx-auto px-6">
           {/* Header Section */}
           <div className="text-center mb-12">
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-full mb-6">
+              <SlidersHorizontal className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                PROPERTY LISTINGS
+              </span>
+            </div>
             <h1 className="text-6xl font-black mb-4">
               <span className="text-gray-900">Explore</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"> Premium Properties</span>
             </h1>
-            <p className="text-gray-600 text-xl">Find your dream property from our exclusive collection</p>
+            <p className="text-gray-600 text-xl max-w-2xl mx-auto">
+              Find your dream property from our exclusive collection of luxury homes and commercial spaces
+            </p>
           </div>
 
-          {/* Filter Button */}
-          <div className="flex justify-between items-center mb-8">
-            <div className="text-lg font-semibold text-gray-700">
-              {properties.length} Properties Found
+          {/* Filter Bar */}
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-4">
+                <div className="text-lg font-bold text-gray-900">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                    {properties.length}
+                  </span>
+                  <span className="text-gray-600"> Properties Found</span>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+              >
+                <Filter className="w-5 h-5" />
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </button>
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <Filter className="w-5 h-5" />
-              Filters
-            </button>
           </div>
 
           {/* Filters Panel */}
           {showFilters && (
-            <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Property Type</label>
+            <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 mb-8 animate-fade-in">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                  Filter Properties
+                </h3>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-all"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">Property Type</label>
                   <select
                     name="type"
                     value={filters.type}
                     onChange={handleFilterChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white"
                   >
                     <option value="">All Types</option>
                     <option value="Apartment">Apartment</option>
                     <option value="Villa">Villa</option>
                     <option value="House">House</option>
                     <option value="Commercial">Commercial</option>
+                    <option value="Land">Land</option>
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Sale Type</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">Sale Type</label>
                   <select
                     name="stype"
                     value={filters.stype}
                     onChange={handleFilterChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all bg-white"
                   >
                     <option value="">All</option>
                     <option value="sale">For Sale</option>
@@ -140,29 +192,84 @@ const Properties = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Bedrooms</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">State</label>
+                  <select
+                    name="state_id"
+                    value={filters.state_id}
+                    onChange={handleFilterChange}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:ring-4 focus:ring-pink-100 transition-all bg-white"
+                  >
+                    <option value="">Any State</option>
+                    {states.map(state => (
+                      <option key={state.sid} value={state.sid}>{state.sname}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">City</label>
+                  <select
+                    name="city_id"
+                    value={filters.city_id}
+                    onChange={handleFilterChange}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all bg-white"
+                  >
+                    <option value="">Any City</option>
+                    {cities.map(city => (
+                      <option key={city.cid} value={city.cid}>{city.cname}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">Bedrooms</label>
                   <select
                     name="bedroom"
                     value={filters.bedroom}
                     onChange={handleFilterChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:ring-4 focus:ring-pink-100 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white"
                   >
                     <option value="">Any</option>
                     <option value="1">1+</option>
                     <option value="2">2+</option>
                     <option value="3">3+</option>
                     <option value="4">4+</option>
+                    <option value="5">5+</option>
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Status</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">Min Price</label>
+                  <input
+                    type="number"
+                    name="min_price"
+                    value={filters.min_price}
+                    onChange={handleFilterChange}
+                    placeholder="Min $"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all bg-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">Max Price</label>
+                  <input
+                    type="number"
+                    name="max_price"
+                    value={filters.max_price}
+                    onChange={handleFilterChange}
+                    placeholder="Max $"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:ring-4 focus:ring-pink-100 transition-all bg-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">Status</label>
                   <select
                     name="status"
                     value={filters.status}
                     onChange={handleFilterChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all bg-white"
                   >
                     <option value="">All Status</option>
                     <option value="available">Available</option>
@@ -172,18 +279,18 @@ const Properties = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-6">
+              <div className="flex gap-4">
                 <button
                   onClick={applyFilters}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 rounded-xl hover:shadow-xl transition-all"
+                  className="flex-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold py-4 rounded-xl hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                 >
                   Apply Filters
                 </button>
                 <button
                   onClick={clearFilters}
-                  className="px-6 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all"
+                  className="px-8 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 rounded-xl transition-all duration-300"
                 >
-                  Clear
+                  Clear All
                 </button>
               </div>
             </div>
@@ -191,110 +298,69 @@ const Properties = () => {
 
           {/* Properties Grid */}
           {properties.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">🏠</div>
-              <p className="text-gray-500 text-xl">No properties found matching your criteria.</p>
+            <div className="text-center py-20 bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl">
+              <div className="text-8xl mb-6">🏠</div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">No Properties Found</h3>
+              <p className="text-gray-500 text-xl mb-8">
+                No properties match your search criteria. Try adjusting your filters.
+              </p>
+              <button
+                onClick={clearFilters}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold px-8 py-4 rounded-xl hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+              >
+                <X className="w-5 h-5" />
+                Clear Filters
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
               {properties.map(property => (
-                <div key={property.pid} className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-gray-100 hover:border-transparent">
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={property.pimage ? `http://localhost:8000/${property.pimage}` : '/assets/placeholder.jpg'}
-                      alt={property.title}
-                      className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
-                      onError={(e) => { e.target.src = '/assets/placeholder.jpg'; }}
-                    />
-                    
-                    {property.featured && (
-                      <div className="absolute top-4 left-4">
-                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                          <Star className="w-3 h-3 fill-current" />
-                          Featured
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                        {property.stype === 'sale' ? 'For Sale' : 'For Rent'}
-                      </span>
-                    </div>
-
-                    {property.verified && (
-                      <div className="absolute bottom-4 left-4">
-                        <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                          ✓ Verified
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                        {property.type}
-                      </span>
-                      <span className="text-sm text-gray-500">ID: {property.pid}</span>
-                    </div>
-
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
-                      {property.title}
-                    </h3>
-
-                    <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3">
-                      ${property.price?.toLocaleString()}
-                    </div>
-
-                    <p className="text-gray-600 mb-4 flex items-center">
-                      <MapPin className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
-                      <span className="line-clamp-1">{property.location}</span>
-                    </p>
-
-                    <div className="flex justify-between items-center pt-4 border-t-2 border-gray-100 mb-4">
-                      <div className="flex items-center gap-1 text-gray-700">
-                        <Bed className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm font-bold">{property.bedroom || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-gray-700">
-                        <Bath className="w-4 h-4 text-purple-500" />
-                        <span className="text-sm font-bold">{property.bathroom || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-gray-700">
-                        <Square className="w-4 h-4 text-pink-500" />
-                        <span className="text-sm font-bold">{property.size || 'N/A'}</span>
-                      </div>
-                    </div>
-
-                    <Link
-                      to={`/properties/${property.pid}`}
-                      className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-center block"
-                    >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
+                <PropertyCard key={property.pid} property={property} />
               ))}
+            </div>
+          )}
+
+          {/* Pagination (if needed) */}
+          {properties.length > 0 && (
+            <div className="flex justify-center mt-12">
+              <div className="flex items-center gap-2">
+                <button className="px-4 py-2 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all font-semibold text-gray-700 hover:text-blue-600">
+                  Previous
+                </button>
+                <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold">
+                  1
+                </button>
+                <button className="px-4 py-2 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all font-semibold text-gray-700 hover:text-blue-600">
+                  2
+                </button>
+                <button className="px-4 py-2 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all font-semibold text-gray-700 hover:text-blue-600">
+                  3
+                </button>
+                <button className="px-4 py-2 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all font-semibold text-gray-700 hover:text-blue-600">
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       <style jsx>{`
-        .line-clamp-1 {
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 1;
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
-        .line-clamp-2 {
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 2;
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
         }
       `}</style>
+      <Footer />
     </>
   );
 };

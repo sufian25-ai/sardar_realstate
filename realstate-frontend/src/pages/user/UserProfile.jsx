@@ -353,21 +353,36 @@ const UserProfile = () => {
                                   <div className="mt-3">
                                     <div className="flex justify-between text-xs text-gray-600 mb-1">
                                       <span>Payment Progress</span>
-                                      <span>{order.payment_details.payment_progress?.toFixed(1)}%</span>
+                                      <span className="font-semibold">{order.payment_details.payment_progress?.toFixed(1)}%</span>
                                     </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                                       <div 
-                                        className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
+                                        className={`h-3 rounded-full transition-all duration-500 ease-out ${
+                                          order.payment_details.payment_progress >= 100 
+                                            ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
+                                            : order.payment_details.payment_progress >= 50
+                                            ? 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                                            : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                                        }`}
                                         style={{ width: `${Math.min(100, order.payment_details.payment_progress || 0)}%` }}
                                       ></div>
                                     </div>
                                   </div>
                                   
-                                  <div className="flex justify-between text-xs text-gray-500 mt-2">
-                                    <span>Payments: {order.payment_details.approved_payments}/{order.payment_details.payment_count}</span>
-                                    <span className={order.payment_details.is_fully_paid ? 'text-green-600 font-medium' : 'text-orange-600'}>
-                                      {order.payment_details.is_fully_paid ? 'Fully Paid' : 'Partial Payment'}
-                                    </span>
+                                  {/* Payment Status Summary */}
+                                  <div className="mt-3 p-2 bg-white rounded border">
+                                    <div className="text-xs text-gray-500">
+                                      Completed: {order.payment_details.completed_payments || 0} | Processing: {order.payment_details.processing_payments || 0} | Pending: {order.payment_details.pending_payments || 0}
+                                    </div>
+                                    <div className="mt-2 flex justify-end">
+                                      <span className={`font-medium px-2 py-1 rounded-full text-xs ${
+                                        order.payment_details.is_fully_paid
+                                          ? 'bg-green-100 text-green-800'
+                                          : 'bg-orange-100 text-orange-800'
+                                      }`}>
+                                        {order.payment_details.is_fully_paid ? '🎉 Fully Paid' : '📊 In Progress'}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               ) : (

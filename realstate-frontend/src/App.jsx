@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Properties from './pages/Properties';
 import PropertyDetails from './pages/PropertyDetails';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 // Admin Pages
 import AdminPanel from './components/AdminPanel';
@@ -60,6 +62,10 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/properties" element={<Properties />} />
+          <Route path="/properties/:id" element={<PropertyDetails />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
 
           {/* Admin Panel Routes */}
           <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>}>
@@ -99,10 +105,7 @@ function App() {
           <Route path="/payment/:propertyId" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />
 
           {/* Properties */}
-          <Route path="/properties" element={<Properties />} />
-          {/* <Route path="/properties/new" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
-          <Route path="/properties/:id" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} /> */}
-          <Route path="/properties/:id" element={<PropertyDetails />} />
+          
 
 
           {/* Redirect unknown routes */}

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Star, ArrowLeft, Phone, Mail, Calendar, User, MessageSquare, Send, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import api from '../services/api';
 
 const PropertyDetails = () => {
@@ -435,6 +436,7 @@ const PropertyDetails = () => {
                               <>
                                 <Send className="w-4 h-4" />
                                 Send Inquiry
+
                               </>
                             )}
                           </button>
@@ -496,7 +498,9 @@ const PropertyDetails = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </>
+    
   );
 };
 
