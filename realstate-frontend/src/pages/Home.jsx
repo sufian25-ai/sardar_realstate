@@ -1,9 +1,15 @@
 // src/pages/HomePage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { Search, MapPin, Bed, Bath, Square, ArrowRight, Star, TrendingUp, Shield, Award, ChevronLeft, ChevronRight } from 'lucide-react';
-import api from '../services/api'; // Import centralized API instance
+import { Search, MapPin, Bed, Bath, Square, ArrowRight, Star, TrendingUp, Shield, Award, ChevronLeft, ChevronRight, Phone, MessageCircle } from 'lucide-react';
+import api from '../services/api';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import CountUp from 'react-countup';
+import { useInView } from 'react-intersection-observer';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const HomePage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -18,6 +24,22 @@ const HomePage = () => {
     min_price: '',
     max_price: ''
   });
+  
+  // Refs for animations
+  const heroRef = useRef(null);
+  const statsRef = useRef(null);
+  const propertiesRef = useRef(null);
+  
+  // InView for counter animation
+  const [statsInView, setStatsInView] = useState(false);
+  const { ref: statsCounterRef, inView } = useInView({
+    threshold: 0.3,
+    triggerOnce: true
+  });
+  
+  useEffect(() => {
+    if (inView) setStatsInView(true);
+  }, [inView]);
 
   // Hero slider images
   const heroSlides = [
@@ -69,11 +91,68 @@ const HomePage = () => {
   ];
 
   const [stats, setStats] = useState([
-    { number: '0', label: 'Properties Listed', gradient: 'from-blue-600 to-cyan-600' },
-    { number: '0', label: 'Happy Clients', gradient: 'from-purple-600 to-pink-600' },
-    { number: '0', label: 'Expert Agents', gradient: 'from-orange-600 to-red-600' },
-    { number: '0', label: 'Awards Won', gradient: 'from-green-600 to-emerald-600' }
+    { number: 0, label: 'Properties Listed', gradient: 'from-blue-600 to-cyan-600', target: 250 },
+    { number: 0, label: 'Happy Clients', gradient: 'from-purple-600 to-pink-600', target: 2000 },
+    { number: 0, label: 'Expert Agents', gradient: 'from-orange-600 to-red-600', target: 150 },
+    { number: 0, label: 'Awards Won', gradient: 'from-green-600 to-emerald-600', target: 50 }
   ]);
+  
+  // GSAP Animations on load
+  useEffect(() => {
+    if (!isLoading && heroRef.current) {
+      const tl = gsap.timeline();
+      
+      tl.from('.hero-content h1', {
+        y: 100,
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out'
+      })
+      .from('.hero-content p', {
+        y: 50,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power2.out'
+      }, '-=0.5')
+      .from('.hero-buttons', {
+        y: 30,
+        opacity: 0,
+        duration: 0.6,
+        ease: 'back.out'
+      }, '-=0.4');
+    }
+  }, [isLoading]);
+  
+  // Scroll Animations
+  useEffect(() => {
+    if (!isLoading) {
+      // Properties animation
+      gsap.from('.property-card', {
+        scrollTrigger: {
+          trigger: '.properties-section',
+          start: 'top 80%',
+        },
+        y: 100,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.2,
+        ease: 'power2.out'
+      });
+      
+      // Services animation
+      gsap.from('.service-card', {
+        scrollTrigger: {
+          trigger: '.services-section',
+          start: 'top 80%',
+        },
+        scale: 0.8,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.15,
+        ease: 'back.out'
+      });
+    }
+  }, [isLoading, featuredProperties]);
 
   // Fetch initial data
   useEffect(() => {
@@ -111,10 +190,10 @@ const HomePage = () => {
         if (allPropertiesRes.data.status === 'success') {
           const totalProperties = allPropertiesRes.data.data.total || 0;
           setStats(prev => [
-            { ...prev[0], number: `${totalProperties}+` },
-            { ...prev[1], number: '2000+' },
-            { ...prev[2], number: '150+' },
-            { ...prev[3], number: '50+' }
+            { ...prev[0], target: totalProperties || 250 },
+            { ...prev[1], target: 2000 },
+            { ...prev[2], target: 150 },
+            { ...prev[3], target: 50 }
           ]);
         }
 
@@ -123,7 +202,7 @@ const HomePage = () => {
         // Set default/empty data on error
         setFeaturedProperties([]);
       } finally {
-        setTimeout(() => setIsLoading(false), 2000);
+        setTimeout(() => setIsLoading(false), 1500);
       }
     };
 
@@ -196,7 +275,7 @@ const HomePage = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative h-screen overflow-hidden">
+      <section ref={heroRef} className="relative h-screen overflow-hidden">
         {heroSlides.map((slide, index) => (
           <div
             key={index}
@@ -214,7 +293,7 @@ const HomePage = () => {
         ))}
 
         <div className="relative z-20 container mx-auto h-full flex items-center px-6">
-          <div className="max-w-3xl">
+          <div className="max-w-3xl hero-content">
             <div className="mb-6 flex items-center space-x-2">
               <div className="h-1 w-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
               <span className="text-white/90 font-medium">Premium Real Estate</span>
@@ -231,7 +310,7 @@ const HomePage = () => {
               {heroSlides[currentSlide].subtitle}
             </p>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 hero-buttons">
               <Link 
                 to="/properties" 
                 className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl font-semibold text-white shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 overflow-hidden"
@@ -279,14 +358,18 @@ const HomePage = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="relative -mt-20 z-30 pb-20">
+      <section ref={statsCounterRef} className="relative -mt-20 z-30 pb-20">
         <div className="container mx-auto px-6">
           <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat, index) => (
                 <div key={index} className="text-center group">
                   <div className={`text-5xl font-black mb-2 bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300`}>
-                    {stat.number}
+                    {statsInView ? (
+                      <CountUp end={stat.target} duration={2.5} suffix="+" />
+                    ) : (
+                      '0+'
+                    )}
                   </div>
                   <div className="text-gray-600 font-medium">{stat.label}</div>
                 </div>
@@ -377,105 +460,121 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Featured Properties */}
-      <section className="py-20 bg-white relative overflow-hidden">
-        <div className="absolute top-20 right-0 w-72 h-72 bg-gradient-to-bl from-blue-100 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-0 w-72 h-72 bg-gradient-to-tr from-purple-100 to-transparent rounded-full blur-3xl"></div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-full mb-6">
-              <Star className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                FEATURED LISTINGS
-              </span>
-            </div>
-            <h2 className="text-5xl font-black mb-6">
-              <span className="text-gray-900">Handpicked</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"> Premium Properties</span>
-            </h2>
-            <p className="text-gray-600 text-xl">
-              Discover our carefully curated selection of luxury properties
-            </p>
-          </div>
+{/* Featured Properties */}
+<section ref={propertiesRef} className="py-20 bg-white relative overflow-hidden properties-section">
+  <div className="absolute top-20 right-0 w-72 h-72 bg-gradient-to-bl from-blue-100 to-transparent rounded-full blur-3xl"></div>
+  <div className="absolute bottom-20 left-0 w-72 h-72 bg-gradient-to-tr from-purple-100 to-transparent rounded-full blur-3xl"></div>
+  
+  <div className="container mx-auto px-6 relative z-10">
+    <div className="text-center max-w-3xl mx-auto mb-16">
+      <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2 rounded-full mb-6">
+        <Star className="w-4 h-4 text-blue-600" />
+        <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+          FEATURED LISTINGS
+        </span>
+      </div>
+      <h2 className="text-5xl font-black mb-6">
+        <span className="text-gray-900">Handpicked</span>
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"> Premium Properties</span>
+      </h2>
+      <p className="text-gray-600 text-xl">
+        Discover our carefully curated selection of luxury properties
+      </p>
+    </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProperties.length > 0 ? featuredProperties.map(property => (
-              <div key={property.pid} className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-gray-100 hover:border-transparent">
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={property.pimage ? `http://localhost:8000/${property.pimage}` : '/assets/placeholder.jpg'}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700" 
-                    alt={property.title}
-                    onError={(e) => {
-                      e.target.src = '/assets/placeholder.jpg';
-                    }}
-                  />
-                  {property.featured && (
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                        <Star className="w-3 h-3 fill-current" />
-                        Featured
-                      </div>
-                    </div>
-                  )}
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                      {property.type}
-                    </span>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {featuredProperties.length > 0 ? featuredProperties.map(property => (
+        <div key={property.pid} className="property-card group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-gray-100 hover:border-transparent">
+          <div className="relative overflow-hidden">
+            <img 
+              src={property.pimage ? `http://localhost:8000/${property.pimage}` : '/assets/placeholder.jpg'}
+              className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700" 
+              alt={property.title}
+              onError={(e) => {
+                e.target.src = '/assets/placeholder.jpg';
+              }}
+            />
+            {property.featured && (
+              <div className="absolute top-4 left-4">
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                  <Star className="w-3 h-3 fill-current" />
+                  Featured
                 </div>
-                
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300 line-clamp-2">
-                    {property.title}
-                  </h3>
-                  <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3">
-                    ${property.price?.toLocaleString()}
-                  </div>
-                  <p className="text-gray-600 mb-4 flex items-center">
-                    <MapPin className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
-                    <span className="line-clamp-1">{property.location}</span>
-                  </p>
-                  
-                  <div className="flex justify-between items-center pt-4 border-t-2 border-gray-100">
-                    <div className="flex items-center gap-1 text-gray-700">
-                      <Bed className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm font-bold">{property.bedroom || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-700">
-                      <Bath className="w-4 h-4 text-purple-500" />
-                      <span className="text-sm font-bold">{property.bathroom || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-700">
-                      <Square className="w-4 h-4 text-pink-500" />
-                      <span className="text-sm font-bold">{property.size || 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )) : (
-              <div className="col-span-4 text-center py-12">
-                <p className="text-gray-500 text-lg">No featured properties available at the moment.</p>
               </div>
             )}
+            <div className="absolute top-4 right-4">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                {property.type}
+              </span>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
+          
+          <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300 line-clamp-2">
+              {property.title}
+            </h3>
+            <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3">
+              ${property.price?.toLocaleString()}
+            </div>
+            <p className="text-gray-600 mb-4 flex items-center">
+              <MapPin className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
+              <span className="line-clamp-1">{property.location}</span>
+            </p>
+            
+            <div className="flex justify-between items-center pt-4 border-t-2 border-gray-100">
+              <div className="flex items-center gap-1 text-gray-700">
+                <Bed className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-bold">{property.bedroom || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-1 text-gray-700">
+                <Bath className="w-4 h-4 text-purple-500" />
+                <span className="text-sm font-bold">{property.bathroom || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-1 text-gray-700">
+                <Square className="w-4 h-4 text-pink-500" />
+                <span className="text-sm font-bold">{property.size || 'N/A'}</span>
+              </div>
+            </div>
 
-          <div className="text-center mt-12">
+            {/* View Details Button */}
             <Link 
-              to="/properties" 
-              className="group inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
+              to={`/properties/${property.pid}`}
+              className="mt-4 w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-center block"
             >
-              <span>View All Properties</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              View Details
             </Link>
           </div>
         </div>
-      </section>
+      )) : (
+        <div className="col-span-4 text-center py-12">
+          <div className="text-6xl mb-4">🏠</div>
+          <p className="text-gray-500 text-lg mb-4">No featured properties available at the moment.</p>
+          <Link 
+            to="/properties" 
+            className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold px-6 py-3 rounded-xl hover:shadow-lg transition-all"
+          >
+            <span>Browse All Properties</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
+    </div>
+
+    <div className="text-center mt-12">
+      <Link 
+        to="/properties" 
+        className="group inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
+      >
+        <span>View All Properties</span>
+        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+      </Link>
+    </div>
+  </div>
+</section>
 
       {/* Services Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 relative overflow-hidden services-section">
         <div className="absolute inset-0">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"></div>
@@ -495,7 +594,7 @@ const HomePage = () => {
             {services.map((service, index) => (
               <div 
                 key={index} 
-                className="group relative bg-white/5 backdrop-blur-sm rounded-3xl p-8 border-2 border-white/10 hover:border-white/20 transition-all duration-500 hover:transform hover:-translate-y-2"
+                className="service-card group relative bg-white/5 backdrop-blur-sm rounded-3xl p-8 border-2 border-white/10 hover:border-white/20 transition-all duration-500 hover:transform hover:-translate-y-2"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${service.gradient} opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-500`}></div>
                 
@@ -516,6 +615,30 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+      
+      {/* WhatsApp Floating Button */}
+      <a
+        href="https://wa.me/8801234567890"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-2xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-110 group animate-bounce"
+        aria-label="Contact on WhatsApp"
+      >
+        <MessageCircle className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+        <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full animate-ping"></span>
+        <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+          1
+        </span>
+      </a>
+      
+      {/* Call Floating Button */}
+      <a
+        href="tel:+8801234567890"
+        className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-110 group"
+        aria-label="Call Us"
+      >
+        <Phone className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+      </a>
 
       {/* Footer */}
       <footer className="bg-gradient-to-br from-slate-900 via-gray-900 to-black text-white relative overflow-hidden">

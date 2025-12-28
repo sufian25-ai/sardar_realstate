@@ -2,10 +2,20 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import HomePage from './pages/Home';
+import HomeEnhanced from './pages/HomeEnhanced';
+import HomeProfessional from './pages/HomeProfessional';
+import HomeNavana from './pages/HomeNavana';
+import HomeUltra from './pages/HomeUltra';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Properties from './pages/Properties';
-import PropertyForm from './pages/PropertyForm';
+import PropertiesUltra from './pages/PropertiesUltra';
+import PropertyDetails from './pages/PropertyDetails';
+import PropertyDetailsUltra from './pages/PropertyDetailsUltra';
+import AboutUs from './pages/AboutUs';
+import AboutUltra from './pages/AboutUltra';
+import Contact from './pages/Contact';
+import ContactUltra from './pages/ContactUltra';
 
 // Admin Pages
 import AdminPanel from './components/AdminPanel';
@@ -24,6 +34,9 @@ import UserList from './pages/admin/UserList';
 // Agent/User Pages
 import AgentDashboard from './pages/agent/AgentDashboard';
 import UserProfile from './pages/user/UserProfile';
+
+//clint
+
 
 import './App.css';
 
@@ -45,7 +58,15 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomeUltra />} />
+          <Route path="/home-navana" element={<HomeNavana />} />
+          <Route path="/home-old" element={<HomePage />} />
+          <Route path="/home-enhanced" element={<HomeEnhanced />} />
+          <Route path="/home-professional" element={<HomeProfessional />} />
+          <Route path="/about" element={<AboutUltra />} />
+          <Route path="/about-old" element={<AboutUs />} />
+          <Route path="/contact" element={<ContactUltra />} />
+          <Route path="/contact-old" element={<Contact />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
@@ -72,9 +93,13 @@ function App() {
           <Route path="/user/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
 
           {/* Properties */}
-          <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
-          <Route path="/properties/new" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
-          <Route path="/properties/:id" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
+          <Route path="/properties" element={<PropertiesUltra />} />
+          <Route path="/properties-old" element={<Properties />} />
+          {/* <Route path="/properties/new" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
+          <Route path="/properties/:id" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} /> */}
+          <Route path="/properties/:id" element={<PropertyDetailsUltra />} />
+          <Route path="/properties-old/:id" element={<PropertyDetails />} />
+
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" />} />
