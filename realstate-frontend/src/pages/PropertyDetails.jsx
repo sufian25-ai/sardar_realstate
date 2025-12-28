@@ -1,12 +1,10 @@
 // src/pages/PropertyDetails.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Bed, Bath, Square, Star, ArrowLeft, Phone, Mail, Calendar } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Star, ArrowLeft, Phone, Mail, Calendar, User, MessageSquare, Send, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import api from '../services/api';
-import InquiryModal from '../pages/InquiryModal';
-
-
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -14,18 +12,28 @@ const PropertyDetails = () => {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({
     name: '',
     email: '',
     phone: '',
-    message: ''
+    message: `I am interested in ${property?.title || 'this property'}. Please contact me with more details.`
   });
   const [submitting, setSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
 
   useEffect(() => {
     fetchPropertyDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (property) {
+      setInquiryForm(prev => ({
+        ...prev,
+        message: `I am interested in ${property.title}. Please contact me with more details.`
+      }));
+    }
+  }, [property]);
 
   const fetchPropertyDetails = async () => {
     try {
@@ -49,6 +57,72 @@ const PropertyDetails = () => {
     if (property.pimage3) images.push(property.pimage3);
     if (property.pimage4) images.push(property.pimage4);
     return images.length > 0 ? images : ['/assets/placeholder.jpg'];
+  };
+
+  const handleInputChange = (e) => {
+    setInquiryForm({
+      ...inquiryForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmitInquiry = async (e) => {
+    e.preventDefault();
+    
+    if (!inquiryForm.name.trim()) {
+      setSubmitStatus({ type: 'error', message: 'Name is required!' });
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/inquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          name: inquiryForm.name,
+          email: inquiryForm.email || null,
+          phone: inquiryForm.phone || null,
+          message: inquiryForm.message || null,
+          property_id: property.pid,
+          status: 'new'
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 'success') {
+        setSubmitStatus({ type: 'success', message: 'Inquiry sent successfully! We will contact you soon.' });
+        setTimeout(() => {
+          setInquiryForm({
+            name: '',
+            email: '',
+            phone: '',
+            message: `I am interested in ${property.title}. Please contact me with more details.`
+          });
+          setShowContactForm(false);
+          setSubmitStatus(null);
+        }, 3000);
+      } else {
+        setSubmitStatus({ 
+          type: 'error', 
+          message: data.message || 'Failed to send inquiry. Please try again.' 
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting inquiry:', error);
+      setSubmitStatus({ 
+        type: 'error', 
+        message: 'Network error. Please check your connection and try again.' 
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -226,14 +300,14 @@ const PropertyDetails = () => {
                           </div>
                         </div>
 
-                        {/* Contact Agent Button triggers modal */}
+                        {/* Contact Agent Buttons */}
                         <div className="space-y-2">
                           <button
-                            onClick={() => setShowInquiryModal(true)}
+                            onClick={() => setShowContactForm(!showContactForm)}
                             className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors"
                           >
                             <Phone className="w-4 h-4" />
-                            Contact Agent
+                            {showContactForm ? 'Hide Contact Form' : 'Contact Agent'}
                           </button>
                           <button className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-colors">
                             <Mail className="w-4 h-4" />
@@ -246,12 +320,148 @@ const PropertyDetails = () => {
                     )}
                   </div>
 
+                  {/* Dynamic Contact Form */}
+                  {showContactForm && (
+                    <div className="bg-white border-2 border-blue-200 rounded-2xl p-6 shadow-lg">
+                      <div className="flex items-center gap-2 mb-4">
+                        <MessageSquare className="w-5 h-5 text-blue-600" />
+                        <h4 className="text-lg font-bold text-gray-900">Send Inquiry</h4>
+                      </div>
+                      
+                      <form onSubmit={handleSubmitInquiry} className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Your Name *
+                          </label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                              type="text"
+                              name="name"
+                              value={inquiryForm.name}
+                              onChange={handleInputChange}
+                              required
+                              placeholder="Enter your full name"
+                              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Email Address
+                          </label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                              type="email"
+                              name="email"
+                              value={inquiryForm.email}
+                              onChange={handleInputChange}
+                              placeholder="your.email@example.com"
+                              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Phone Number
+                          </label>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                              type="tel"
+                              name="phone"
+                              value={inquiryForm.phone}
+                              onChange={handleInputChange}
+                              placeholder="+880 1XXX-XXXXXX"
+                              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Message
+                          </label>
+                          <div className="relative">
+                            <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                            <textarea
+                              name="message"
+                              value={inquiryForm.message}
+                              onChange={handleInputChange}
+                              rows="3"
+                              placeholder="Tell us about your requirements..."
+                              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        {submitStatus && (
+                          <div className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
+                            submitStatus.type === 'success' 
+                              ? 'bg-green-50 text-green-800 border border-green-200' 
+                              : 'bg-red-50 text-red-800 border border-red-200'
+                          }`}>
+                            {submitStatus.type === 'success' ? (
+                              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                            ) : (
+                              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            )}
+                            <p className="font-medium">{submitStatus.message}</p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowContactForm(false)}
+                            disabled={submitting}
+                            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2.5 rounded-lg transition-colors disabled:opacity-50 text-sm"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={submitting}
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                          >
+                            {submitting ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Sending...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-4 h-4" />
+                                Send Inquiry
+
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
                   {/* Action Buttons */}
                   <div className="space-y-3">
                     {property.stype === 'rent' && property.status === 'available' && (
                       <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all">
                         <Calendar className="w-5 h-5" />
                         Book Property
+                      </button>
+                    )}
+                    
+                    {/* Payment Button */}
+                    {property.status === 'available' && (
+                      <button 
+                        onClick={() => navigate(`/payment/${property.pid}`)}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all"
+                      >
+                        <CreditCard className="w-5 h-5" />
+                        Make Payment
                       </button>
                     )}
                     
@@ -288,14 +498,9 @@ const PropertyDetails = () => {
           </div>
         </div>
       </div>
-      {showInquiryModal && (
-        <InquiryModal 
-          propertyId={property.id}    
-          show={showInquiryModal}
-          onClose={() => setShowInquiryModal(false)} 
-        />
-      )}
+      <Footer />
     </>
+    
   );
 };
 

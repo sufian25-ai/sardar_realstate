@@ -13,8 +13,8 @@ class Payment extends Model
     protected $table = 'payments';
 
     protected $fillable = [
-        'property_id',
         'user_id',
+        'property_id',
         'rent_id',
         'amount_paid',
         'remaining_amount',
@@ -23,12 +23,15 @@ class Payment extends Model
         'interest_rate',
         'amount_with_interest',
         'discount',
-        'transaction_id',
         'payment_method',
+        'transaction_id',
         'payment_details',
-        'status',
         'payment_date',
-        'approved_at'
+        'status',
+        'installment_number',
+        'notes',
+        'admin_notes',
+        'approved_by'
     ];
 
     protected $casts = [
@@ -38,14 +41,13 @@ class Payment extends Model
         'installment_amount' => 'decimal:2',
         'amount_with_interest' => 'decimal:2',
         'discount' => 'decimal:2',
-        'payment_date' => 'datetime',
-        'approved_at' => 'datetime'
+        'payment_date' => 'datetime'
     ];
 
     // Relationships
     public function property()
     {
-        return $this->belongsTo(Property::class, 'property_id');
+        return $this->belongsTo(Property::class, 'property_id', 'pid');
     }
 
     public function user()
@@ -58,20 +60,30 @@ class Payment extends Model
         return $this->belongsTo(Rent::class, 'rent_id');
     }
 
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     // Scopes
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeApproved($query)
+    public function scopeProcessing($query)
     {
-        return $query->where('status', 'approved');
+        return $query->where('status', 'processing');
     }
 
-    public function scopeFailed($query)
+    public function scopeCompleted($query)
     {
-        return $query->where('status', 'failed');
+        return $query->where('status', 'completed');
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', 'cancelled');
     }
 
     public function scopeByUser($query, $userId)
@@ -95,16 +107,90 @@ class Payment extends Model
         return '৳ ' . number_format($this->remaining_amount, 2);
     }
 
-    public function isApproved()
+    public function isCompleted()
     {
-        return $this->status === 'approved';
+        return $this->status === 'completed';
+    }
+
+    public function isProcessing()
+    {
+        return $this->status === 'processing';
+    }
+
+    public function markAsProcessing()
+    {
+        $this->update([
+            'status' => 'processing'
+        ]);
+    }
+
+    public function markAsCompleted()
+    {
+        $this->update(['status' => 'completed']);
+        return $this;
     }
 
     public function markAsApproved()
     {
-        $this->update([
-            'status' => 'approved',
-            'approved_at' => now()
-        ]);
+        $this->update(['status' => 'completed']);
+        return $this;
+    }
+
+    /**
+     * Calculate total paid amount for this property by this user
+     */
+    public function getTotalPaidForProperty()
+    {
+        return static::where('property_id', $this->property_id)
+            ->where('user_id', $this->user_id)
+            ->where('status', 'completed')
+            ->sum('amount_paid');
+    }
+
+    /**
+     * Calculate remaining amount for this property
+     */
+    public function calculateRemainingAmount()
+    {
+        $totalPaid = $this->getTotalPaidForProperty();
+        return max(0, $this->property_price - $totalPaid);
+    }
+
+    /**
+     * Get payment progress percentage
+     */
+    public function getPaymentProgressAttribute()
+    {
+        if ($this->property_price <= 0) return 0;
+        
+        $totalPaid = $this->getTotalPaidForProperty();
+        return min(100, ($totalPaid / $this->property_price) * 100);
+    }
+
+    /**
+     * Check if property is fully paid
+     */
+    public function isFullyPaid()
+    {
+        return $this->calculateRemainingAmount() <= 0;
+    }
+
+    /**
+     * Get payment status text
+     */
+    public function getPaymentStatusTextAttribute()
+    {
+        if ($this->isFullyPaid()) {
+            return 'Fully Paid';
+        }
+        
+        $progress = $this->payment_progress;
+        if ($progress == 0) return 'Not Started';
+        if ($progress < 25) return 'Just Started';
+        if ($progress < 50) return 'In Progress';
+        if ($progress < 75) return 'More than Half';
+        if ($progress < 100) return 'Almost Complete';
+        
+        return 'Completed';
     }
 }

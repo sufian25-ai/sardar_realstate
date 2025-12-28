@@ -30,7 +30,11 @@ api.interceptors.response.use(
       if (error.response.status === 401) {
         console.warn('Unauthorized: Token may be expired.');
         localStorage.removeItem('token');
-        window.location.href = '/login'; // redirect to login if needed
+        delete api.defaults.headers.common['Authorization'];
+        // Only redirect if not already on login page
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
 
       // Handle server errors gracefully

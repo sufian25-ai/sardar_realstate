@@ -2,20 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import HomePage from './pages/Home';
-import HomeEnhanced from './pages/HomeEnhanced';
-import HomeProfessional from './pages/HomeProfessional';
-import HomeNavana from './pages/HomeNavana';
-import HomeUltra from './pages/HomeUltra';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Properties from './pages/Properties';
-import PropertiesUltra from './pages/PropertiesUltra';
 import PropertyDetails from './pages/PropertyDetails';
-import PropertyDetailsUltra from './pages/PropertyDetailsUltra';
-import AboutUs from './pages/AboutUs';
-import AboutUltra from './pages/AboutUltra';
+import About from './pages/About';
 import Contact from './pages/Contact';
-import ContactUltra from './pages/ContactUltra';
 
 // Admin Pages
 import AdminPanel from './components/AdminPanel';
@@ -32,10 +24,19 @@ import UserList from './pages/admin/UserList';
 // import Settings from './pages/admin/Settings';
 
 // Agent/User Pages
+import AgentAdmin from './components/AgentAdmin';
 import AgentDashboard from './pages/agent/AgentDashboard';
+import AgentUsers from './pages/agent/AgentUsers';
+import AgentInquiries from './pages/agent/AgentInquiries';
+import CityManagements from './pages/agent/CityManagement';
+import StateManagements from './pages/agent/StateManagement';
+import CreatePropertyWithUploads from './pages/admin/CreatePropertyWithUpload';
+import PropertyLists from './pages/agent/PropertyList';
+import PaymentManagement from './pages/agent/PaymentManagement';
+//User Pages
 import UserProfile from './pages/user/UserProfile';
-
-//clint
+import UserProfileEdit from './pages/user/UserProfileEdit';
+import PaymentForm from './pages/PaymentForm';
 
 
 import './App.css';
@@ -58,17 +59,13 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<HomeUltra />} />
-          <Route path="/home-navana" element={<HomeNavana />} />
-          <Route path="/home-old" element={<HomePage />} />
-          <Route path="/home-enhanced" element={<HomeEnhanced />} />
-          <Route path="/home-professional" element={<HomeProfessional />} />
-          <Route path="/about" element={<AboutUltra />} />
-          <Route path="/about-old" element={<AboutUs />} />
-          <Route path="/contact" element={<ContactUltra />} />
-          <Route path="/contact-old" element={<Contact />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/properties" element={<Properties />} />
+          <Route path="/properties/:id" element={<PropertyDetails />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
 
           {/* Admin Panel Routes */}
           <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>}>
@@ -87,18 +84,28 @@ function App() {
           </Route>
 
           {/* Agent Panel */}
-          <Route path="/agent/dashboard" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
+          <Route path="/agent" element={<ProtectedRoute><AgentAdmin /></ProtectedRoute>} >
+           <Route index element={<AgentDashboard />} /> {/* default /admin */}
+            <Route path="dashboard" element={<AgentDashboard />} />
+            <Route path="users" element={<AgentUsers />} />
+            <Route path="inquiries" element={<AgentInquiries />} />
+            <Route path="states" element={<StateManagements />} />
+            <Route path="cities" element={<CityManagements />} />
+            <Route path="properties" element={<CreatePropertyWithUploads />} />
+            <Route path="properties/list" element={<PropertyLists />} />
+            <Route path="payments" element={<PaymentManagement />} />
+          </Route>
+
 
           {/* User Pages */}
           <Route path="/user/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+          <Route path="/user/profile/edit" element={<ProtectedRoute><UserProfileEdit /></ProtectedRoute>} />
+
+          {/* Payment */}
+          <Route path="/payment/:propertyId" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />
 
           {/* Properties */}
-          <Route path="/properties" element={<PropertiesUltra />} />
-          <Route path="/properties-old" element={<Properties />} />
-          {/* <Route path="/properties/new" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} />
-          <Route path="/properties/:id" element={<ProtectedRoute><PropertyForm /></ProtectedRoute>} /> */}
-          <Route path="/properties/:id" element={<PropertyDetailsUltra />} />
-          <Route path="/properties-old/:id" element={<PropertyDetails />} />
+          
 
 
           {/* Redirect unknown routes */}

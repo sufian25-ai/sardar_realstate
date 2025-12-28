@@ -138,6 +138,39 @@ class AuthenticationController extends Controller
     }
 
     /**
+     * Get authenticated user info — protected route.
+     */
+    public function me()
+    {
+        try {
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'response_code' => 401,
+                    'status'        => 'error',
+                    'message'       => 'User not authenticated',
+                ], 401);
+            }
+
+            return response()->json([
+                'response_code' => 200,
+                'status'        => 'success',
+                'message'       => 'User info fetched successfully',
+                'user'          => $user,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Get User Error: ' . $e->getMessage());
+
+            return response()->json([
+                'response_code' => 500,
+                'status'        => 'error',
+                'message'       => 'Failed to fetch user info',
+            ], 500);
+        }
+    }
+
+    /**
      * Get list of users (paginated) — protected route.
      */
     public function userInfo()
